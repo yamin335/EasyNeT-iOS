@@ -1,0 +1,21 @@
+//
+//  Profile.swift
+//  PacENeT iOS
+//
+//  Created by rgl on 29/12/19.
+//  Copyright © 2019 royalgreen. All rights reserved.
+//
+
+import SwiftUI
+
+struct Profile: View {
+    var body: some View {
+        Text("Profile")
+    }
+}
+
+struct Profile_Previews: PreviewProvider {
+    static var previews: some View {
+        Profile()
+    }
+}
