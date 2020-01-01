@@ -11,6 +11,7 @@
 		FD1C34C923B9CA05003BFBFF /* ContactView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD1C34C623B9CA05003BFBFF /* ContactView.swift */; };
 		FD1C34CA23B9CA05003BFBFF /* FaqsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD1C34C723B9CA05003BFBFF /* FaqsView.swift */; };
 		FD1C34CC23B9CB0E003BFBFF /* DefaultApiResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD1C34CB23B9CB0E003BFBFF /* DefaultApiResponse.swift */; };
+		FD47C11723BB38B000C68793 /* MoreMenuViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD47C11623BB38B000C68793 /* MoreMenuViewModel.swift */; };
 		FD7E6C2623B220CC00BF5FB0 /* MainContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD7E6C2523B220CC00BF5FB0 /* MainContainerView.swift */; };
 		FD7E6C2823B2210700BF5FB0 /* UserData.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD7E6C2723B2210700BF5FB0 /* UserData.swift */; };
 		FD8CC98B23B1D74E001CDBD1 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD8CC98A23B1D74E001CDBD1 /* AppDelegate.swift */; };
@@ -60,6 +61,7 @@
 		FD1C34C623B9CA05003BFBFF /* ContactView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContactView.swift; sourceTree = "<group>"; };
 		FD1C34C723B9CA05003BFBFF /* FaqsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FaqsView.swift; sourceTree = "<group>"; };
 		FD1C34CB23B9CB0E003BFBFF /* DefaultApiResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DefaultApiResponse.swift; sourceTree = "<group>"; };
+		FD47C11623BB38B000C68793 /* MoreMenuViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoreMenuViewModel.swift; sourceTree = "<group>"; };
 		FD7E6C2523B220CC00BF5FB0 /* MainContainerView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MainContainerView.swift; sourceTree = "<group>"; };
 		FD7E6C2723B2210700BF5FB0 /* UserData.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserData.swift; sourceTree = "<group>"; };
 		FD8CC98723B1D74E001CDBD1 /* PacENeT iOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "PacENeT iOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -156,6 +158,7 @@
 				FD7E6C2523B220CC00BF5FB0 /* MainContainerView.swift */,
 				FD9362DF23B4D42700C1A9CB /* MainScreen.swift */,
 				FDB3BA5423B8B2AA007B1552 /* MoreMenu.swift */,
+				FD47C11623BB38B000C68793 /* MoreMenuViewModel.swift */,
 				FD9362EE23B4D45600C1A9CB /* NetworkApiService.swift */,
 				FD1C34C523B9CA04003BFBFF /* PrivacyView.swift */,
 				FDB3BA4E23B8AFB7007B1552 /* Profile.swift */,
@@ -339,6 +342,7 @@
 				FDB3BA4D23B8AF7B007B1552 /* Dashboard.swift in Sources */,
 				FD1C34C823B9CA05003BFBFF /* PrivacyView.swift in Sources */,
 				FDB3BA5123B8B14C007B1552 /* Billing.swift in Sources */,
+				FD47C11723BB38B000C68793 /* MoreMenuViewModel.swift in Sources */,
 				FD8CC98B23B1D74E001CDBD1 /* AppDelegate.swift in Sources */,
 				FD9362E423B4D42700C1A9CB /* SplashScreen.swift in Sources */,
 				FD9362E523B4D42700C1A9CB /* SpinLoaderView.swift in Sources */,

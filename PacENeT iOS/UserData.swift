@@ -11,9 +11,6 @@ import Combine
 
 final class UserData: ObservableObject  {
     @Published var isLoggedIn = false
-    @Published var userID = ""
-    @Published var userName = ""
-    @Published var password = ""
     @Published var shouldShowSplash = true
 }
 
@@ -67,6 +64,20 @@ struct UserLocalStorage {
         userDefault.removeObject(forKey: "unitPrice")
         userDefault.removeObject(forKey: "created")
     }
+    
+    static func saveUserCredentials(userCredentials: UserCredentials) {
+        userDefault.set(userCredentials.userName, forKey: "userNameCreden")
+        userDefault.set(userCredentials.password, forKey: "passwordCreden")
+    }
+    
+    static func getUserCredentials() -> UserCredentials {
+        return UserCredentials(userName: userDefault.value(forKey: "userNameCreden") as? String ?? "", password: userDefault.value(forKey: "passwordCreden") as? String ?? "")
+    }
+    
+    static func clearUserCredentials(){
+        userDefault.removeObject(forKey: "userNameCreden")
+        userDefault.removeObject(forKey: "passwordCreden")
+    }
 }
 
 struct User {
@@ -112,5 +123,15 @@ struct User {
         self.srvName = srvName
         self.unitPrice = unitPrice
         self.created = created
+    }
+}
+
+struct UserCredentials {
+    var userName: String
+    var password: String
+    
+    init(userName: String, password: String) {
+        self.userName = userName
+        self.password = password
     }
 }

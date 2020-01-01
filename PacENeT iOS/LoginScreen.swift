@@ -11,14 +11,12 @@ import Combine
 struct LoginScreen: View {
     
     @EnvironmentObject var userData: UserData
-    @ObservedObject var loginViewModel: LoginViewModel
+    @ObservedObject var loginViewModel = LoginViewModel()
     @State private var showLoader = false
     @State private var loginStatusSubscriber: AnyCancellable? = nil
-    @State var showSignUpModal = false
+//    @State var showSignUpModal = false
     
     @State private var loginButtonDisabled = true
-    @State private var username: String = ""
-    @State private var password: String = ""
     
     //Login toasts
     @State var showSuccessToast = false
@@ -87,7 +85,7 @@ struct LoginScreen: View {
                         
                         Button(action: {
                             withAnimation() {
-                                self.loginViewModel.showSignupModal = true
+//                                self.loginViewModel.showSignupModal = true
                             }
                         }) {
                             Text("Sign Up")
@@ -130,14 +128,15 @@ struct LoginScreen: View {
                         .foregroundColor(.gray)
                         .padding(.bottom, 8)
                     
-                }.onReceive(self.loginViewModel.signUpModalValuePublisher.receive(on: RunLoop.main)) { value in
-                    self.showSignUpModal = value
                 }
+//                .onReceive(self.loginViewModel.signUpModalValuePublisher.receive(on: RunLoop.main)) { value in
+//                    self.showSignUpModal = value
+//                }
 
-                
-                if self.showSignUpModal {
-//                    SignupView(loginViewModel: loginViewModel).edgesIgnoringSafeArea(.all)
-                }
+//                
+//                if self.showSignUpModal {
+////                    SignupView(loginViewModel: loginViewModel).edgesIgnoringSafeArea(.all)
+//                }
                 
                 if self.showSuccessToast {
                     SuccessToast(message: self.successMessage).onAppear {
@@ -149,7 +148,7 @@ struct LoginScreen: View {
                         }
                     }
                 }
-                
+
                 if showErrorToast {
                     ErrorToast(message: self.errorMessage).onAppear {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
@@ -189,7 +188,7 @@ struct LoginScreen: View {
 
 struct LoginScreen_Previews: PreviewProvider {
     static var previews: some View {
-        LoginScreen(loginViewModel: LoginViewModel())
+        LoginScreen()
             .environmentObject(UserData())
     }
 }

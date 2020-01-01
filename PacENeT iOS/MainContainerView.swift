@@ -17,7 +17,7 @@ struct MainContainerView: View {
             if userData.isLoggedIn {
                 MainScreen()
             } else {
-                SplashAndLoginContainer(loginViewModel: LoginViewModel())
+                SplashAndLoginContainer()
             }
         }
     }

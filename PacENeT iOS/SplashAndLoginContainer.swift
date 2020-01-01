@@ -11,11 +11,10 @@ import SwiftUI
 struct SplashAndLoginContainer: View {
     
     @EnvironmentObject var userData: UserData
-    @ObservedObject var loginViewModel: LoginViewModel
     
     var body: some View {
         ZStack{
-            LoginScreen(loginViewModel: loginViewModel)
+            LoginScreen()
             SplashScreen()
                 .opacity(self.userData.shouldShowSplash ? 1 : 0)
                 .onAppear {
@@ -31,7 +30,7 @@ struct SplashAndLoginContainer: View {
 
 struct SplashAndLoginContainer_Previews: PreviewProvider {
     static var previews: some View {
-        SplashAndLoginContainer(loginViewModel: LoginViewModel())
+        SplashAndLoginContainer()
             .environmentObject(UserData())
     }
 }
