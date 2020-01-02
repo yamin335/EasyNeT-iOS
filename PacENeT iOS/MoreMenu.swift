@@ -13,7 +13,15 @@ struct MoreMenu: View {
     @EnvironmentObject var userData: UserData
     @State private var showSignoutAlert = false
     @State private var showChangePassModal = false
-    @State private var disableSaveButton = true
+    @State private var showOldPassError = false
+    @State private var showSamePassError = false
+    @State private var showPassMisMatchError = false
+    @State private var showLoader = false
+    @State var showSuccessToast = false
+    @State var successMessage: String = ""
+    @State var showErrorToast = false
+    @State var errorMessage: String = ""
+    @State private var enableSaveButton = false
     @ObservedObject var viewModel = MoreMenuViewModel()
     
     var signoutButton: some View {
@@ -36,7 +44,7 @@ struct MoreMenu: View {
                 .blur(radius: 0.5, opaque: false)
                 .opacity(0.4)
                 .edgesIgnoringSafeArea(.all)
-            VStack(alignment: .leading) {
+            VStack(alignment: .leading, spacing: 0) {
                 Text("Change Password")
                     .font(.system(size: 24))
                     .fontWeight(.light)
@@ -44,19 +52,41 @@ struct MoreMenu: View {
                     .padding(.leading, 20).padding(.trailing, 20).padding(.top, 8)
                 SecureField("Old Password", text: $viewModel.oldPassword)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .padding(.leading, 20).padding(.trailing, 20)
+                    .padding(.leading, 20).padding(.trailing, 20).padding(.top, 12)
+                if showOldPassError {
+                    Text("Wrong Old Password!")
+                        .font(.caption)
+                        .fontWeight(.light)
+                        .foregroundColor(Color.red)
+                        .padding(.leading, 20).padding(.trailing, 20)
+                }
                 SecureField("New Password", text: $viewModel.newPassword)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .padding(.leading, 20).padding(.trailing, 20).padding(.top, 8)
+                    .padding(.leading, 20).padding(.trailing, 20).padding(.top, 12)
+                if showSamePassError {
+                    Text("Same as Old Password!")
+                        .font(.caption)
+                        .fontWeight(.light)
+                        .foregroundColor(Color.red)
+                        .padding(.leading, 20).padding(.trailing, 20)
+                }
                 SecureField("Confirm Password", text: $viewModel.newConfPassword)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .padding(.leading, 20).padding(.trailing, 20).padding(.top, 8)
+                    .padding(.leading, 20).padding(.trailing, 20).padding(.top, 12)
+                if showPassMisMatchError {
+                    Text("Password Mismatched!")
+                        .font(.caption)
+                        .fontWeight(.light)
+                        .foregroundColor(Color.red)
+                        .padding(.leading, 20).padding(.trailing, 20)
+                }
                 HStack(alignment: .center, spacing: 20) {
                     Spacer()
                     
                     Button(action: {
                         withAnimation {
                             self.showChangePassModal = false
+                            self.clearTextFields()
                         }
                     }) {
                         Text("Close")
@@ -72,6 +102,8 @@ struct MoreMenu: View {
                     Button(action: {
                         withAnimation {
                             self.showChangePassModal = false
+                            self.clearTextFields()
+                            self.viewModel.changePassword()
                         }
                     }) {
                         Text("Save")
@@ -82,11 +114,11 @@ struct MoreMenu: View {
                             .padding(.trailing, 16)
                             .foregroundColor(Colors.greenTheme)
                             .background(RoundedRectangle(cornerRadius: 4, style: .circular).fill(Colors.whiteGray))
-                    }.disabled(disableSaveButton)
+                    }.disabled(!enableSaveButton)
                 }
                 .padding(.leading, 20)
                 .padding(.trailing, 20)
-                .padding(.top, 16)
+                .padding(.top, 20)
                 .padding(.bottom, 20)
             }.frame(minWidth: 0, maxWidth: .infinity)
                 .background(RoundedRectangle(cornerRadius: 6, style: .circular).fill(Color.white))
@@ -114,13 +146,64 @@ struct MoreMenu: View {
                 
                 if showChangePassModal {
                     changePasswordModal.edgesIgnoringSafeArea(.all)
-                        .onReceive(self.viewModel.isChangePassFormValid.receive(on: RunLoop.main)) { isDisabled in
-                        self.disableSaveButton = isDisabled
+                        .onReceive(self.viewModel.isChangePassFormValid.receive(on: RunLoop.main)) { value in
+                        self.showOldPassError = value == 1
+                        self.showSamePassError = value == 2
+                        self.showPassMisMatchError = value == 3
+                        self.enableSaveButton = value == 4
                     }
                 }
                 
+                if self.showSuccessToast {
+                    SuccessToast(message: self.successMessage).onAppear {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                            withAnimation() {
+                                self.showSuccessToast = false
+                                self.successMessage = ""
+                            }
+                        }
+                    }
+                }
+                
+                if showErrorToast {
+                    ErrorToast(message: self.errorMessage).onAppear {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                            withAnimation() {
+                                self.showErrorToast = false
+                                self.errorMessage = ""
+                            }
+                        }
+                    }
+                }
+                
+                if showLoader {
+                    SpinLoaderView()
+                }
+            }
+            .onReceive(self.viewModel.showLoader.receive(on: RunLoop.main)) { doingSomethingNow in
+                self.showLoader = doingSomethingNow
+            }
+            .onReceive(self.viewModel.successToastPublisher.receive(on: RunLoop.main)) {
+                showToast, message in
+                self.successMessage = message
+                withAnimation() {
+                    self.showSuccessToast = showToast
+                }
+            }
+            .onReceive(self.viewModel.errorToastPublisher.receive(on: RunLoop.main)) {
+                showToast, message in
+                self.errorMessage = message
+                withAnimation() {
+                    self.showErrorToast = showToast
+                }
             }
         }
+    }
+    
+    func clearTextFields() {
+        self.viewModel.oldPassword = ""
+        self.viewModel.newPassword = ""
+        self.viewModel.newConfPassword = ""
     }
 }
 
