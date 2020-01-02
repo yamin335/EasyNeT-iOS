@@ -38,14 +38,19 @@ class MoreMenuViewModel: ObservableObject {
                     return 2
                 }
                 
-                if !newPassword.isEmpty && !newConfPassword.isEmpty && newPassword != newConfPassword {
+                if !newPassword.isEmpty && (newPassword.count < 5 || newPassword.count > 24)  {
                     return 3
+                }
+                
+                if !newPassword.isEmpty && !newConfPassword.isEmpty && newPassword != newConfPassword {
+                    return 4
                 }
                 
                 guard !oldPassword.isEmpty, !newPassword.isEmpty,
                     !newConfPassword.isEmpty, oldPassword == self.userCredentials.password,
-                    oldPassword != newPassword, newPassword == newConfPassword else { return nil }
-                return 4
+                    oldPassword != newPassword, newPassword == newConfPassword,
+                    newPassword.count >= 5, newPassword.count <= 24 else { return nil }
+                return 5
         }
         .eraseToAnyPublisher()
     }

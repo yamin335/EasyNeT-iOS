@@ -16,6 +16,7 @@ struct MoreMenu: View {
     @State private var showOldPassError = false
     @State private var showSamePassError = false
     @State private var showPassMisMatchError = false
+    @State private var newPassErrorMessage = ""
     @State private var showLoader = false
     @State var showSuccessToast = false
     @State var successMessage: String = ""
@@ -64,7 +65,7 @@ struct MoreMenu: View {
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .padding(.leading, 20).padding(.trailing, 20).padding(.top, 12)
                 if showSamePassError {
-                    Text("Same as Old Password!")
+                    Text(newPassErrorMessage)
                         .font(.caption)
                         .fontWeight(.light)
                         .foregroundColor(Color.red)
@@ -147,10 +148,19 @@ struct MoreMenu: View {
                 if showChangePassModal {
                     changePasswordModal.edgesIgnoringSafeArea(.all)
                         .onReceive(self.viewModel.isChangePassFormValid.receive(on: RunLoop.main)) { value in
-                        self.showOldPassError = value == 1
-                        self.showSamePassError = value == 2
-                        self.showPassMisMatchError = value == 3
-                        self.enableSaveButton = value == 4
+                            self.showOldPassError = value == 1
+                            if value == 2 {
+                                self.showSamePassError = true
+                                self.newPassErrorMessage = "Same as Old Password!"
+                            } else if value == 3 {
+                                self.showSamePassError = true
+                                self.newPassErrorMessage = "Password length must range from 5 to 24"
+                            } else {
+                                self.showSamePassError = false
+                                self.newPassErrorMessage = ""
+                            }
+                            self.showPassMisMatchError = value == 4
+                            self.enableSaveButton = value == 5
                     }
                 }
                 
