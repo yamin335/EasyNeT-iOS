@@ -9,7 +9,7 @@
 import Foundation
 import Combine
 class NetworkApiService {
-    static let webBaseUrl = "http://123.136.26.98:8081"
+    static let webBaseUrl = "https://api.pacenet.net"
     enum APIFailureCondition: Error {
         case InvalidServerResponse
     }

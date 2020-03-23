@@ -15,13 +15,16 @@ struct LoginResponse: Codable {
 
 // MARK: - LoginResdata
 struct LoginResdata: Codable {
-    var loggeduser: Loggeduser?
+    var loggeduser: LoggedUser?
     var message: String?
 }
 
-// MARK: - Loggeduser
-struct Loggeduser: Codable {
+// MARK: - LoggedUser
+struct LoggedUser: Codable {
     var userID: Int?
     var userName: String?
     var email: String?
+    var userTypeId: Int?
+    var ispToken: String?
+    var tokenValidity: Int?
 }

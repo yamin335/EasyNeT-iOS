@@ -9,10 +9,11 @@
 import SwiftUI
 
 struct MainScreen: View {
-    @State private var selection = 0
-    
+    //@State private var selection = 0
+    @EnvironmentObject var userData: UserData
+    @ObservedObject var mainScreenViewModel = MainScreenViewModel()
     var body: some View {
-        TabView(selection: $selection){
+        TabView(selection: $userData.selectedTabItem) {
             Dashboard()
                 .tabItem {
                 VStack {
@@ -62,7 +63,11 @@ struct MainScreen: View {
                     }
             }
             .tag(4)
-        }.accentColor(Colors.greenTheme).edgesIgnoringSafeArea(.top)
+        }
+        .onAppear() {
+            self.mainScreenViewModel.getUserData()
+        }
+        .accentColor(Colors.greenTheme).edgesIgnoringSafeArea(.top)
     }
 }
 

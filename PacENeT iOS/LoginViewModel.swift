@@ -265,7 +265,7 @@ class LoginViewModel: NSObject, ObservableObject, URLSessionTaskDelegate {
                     self.errorToastPublisher.send((true, loginResponse.resdata.message ?? "Something wrong, please try again!"))
                 } else {
                     self.loginStatusPublisher.send(true)
-                    UserLocalStorage.saveUserCredentials(userCredentials: UserCredentials(userName: self.username, password: self.password))
+                    UserLocalStorage.saveUserCredentials(userCredentials: UserCredentials(userName: self.username, password: self.password, loggedUser: loginResponse.resdata.loggeduser))
                 }
             })
     }
