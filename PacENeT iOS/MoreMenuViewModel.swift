@@ -84,7 +84,7 @@ class MoreMenuViewModel: ObservableObject {
     func executeChangePasswordApiCall() -> AnyPublisher<DefaultResponse, Error>? {
 
         let userCredentials = UserLocalStorage.getUserCredentials()
-        let jsonObject = ["passowrd": newPassword,
+        let jsonObject = ["password": newPassword,
                           "userName": userCredentials.userName,
                           "oldPassword": oldPassword] as [String : Any?]
         
