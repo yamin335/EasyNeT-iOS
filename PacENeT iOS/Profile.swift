@@ -19,6 +19,7 @@ struct Profile: View {
     @State private var packageCharge = ""
     @State private var email = ""
     @State private var phone = ""
+    @State private var isPackageSheetPresented = false
     
     var signoutButton: some View {
         Button(action: {
@@ -97,13 +98,40 @@ struct Profile: View {
         }.padding(.leading, 16)
     }
     
+    struct PackageChangeView: View {
+        @Environment(\.presentationMode) var presentationMode
+        var body: some View {
+            NavigationView {
+                Text("Package Change View")
+                .navigationBarTitle(Text("Sheet View"), displayMode: .inline)
+                    .navigationBarItems(trailing: Button(action: {
+                        print("Dismissing sheet view...")
+                        self.presentationMode.wrappedValue.dismiss()
+                    }) {
+                        Text("Done").bold()
+                    })
+            }
+        }
+    }
+    
     var packageView: some View {
         VStack(alignment: .leading) {
-            Text("Package")
-                .bold()
-                .font(.system(size: 15))
-                .font(.title)
-                .foregroundColor(Color.gray)
+            HStack {
+                Text("Package")
+                    .bold()
+                    .font(.system(size: 15))
+                    .font(.title)
+                    .foregroundColor(Color.gray)
+                
+                Button(action: {
+                    self.isPackageSheetPresented.toggle()
+                }) {
+                    Text("Change")
+                        .foregroundColor(Colors.color7)
+                }.sheet(isPresented: $isPackageSheetPresented, content: {
+                    PackageChangeView()
+                })
+            }
             Text(package)
                 .font(.system(size: 14))
                 .font(.body)
@@ -173,9 +201,9 @@ struct Profile: View {
             let date = userInfo?.created ?? ""
             if date.contains("T") {
                 let splits = date.split(separator: "T")
-            
+
                 let tempSplits = (splits.count > 1 ? splits[1] : "").split(separator: ".")[0].split(separator: ":")
-                
+
                 self.createDate = splits[0] + "  " + tempSplits[0] + ":" + tempSplits[1]
             } else {
                 self.createDate = userInfo?.created ?? ""

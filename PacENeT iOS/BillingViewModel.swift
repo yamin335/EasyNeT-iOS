@@ -22,7 +22,7 @@ class BillingViewModel: ObservableObject {
     
     var objectWillChange = PassthroughSubject<Bool, Never>()
     
-    private var postAmountSubscriber: AnyCancellable? = nil
+    private var fosterGetUrlSubscriber: AnyCancellable? = nil
     private var validAmountChecker: AnyCancellable? = nil
     private var fosterStatusSubscriber: AnyCancellable? = nil
     private var fosterRechargeSaveSubscriber: AnyCancellable? = nil
@@ -79,7 +79,7 @@ class BillingViewModel: ObservableObject {
     }
     
     deinit {
-        postAmountSubscriber?.cancel()
+        fosterGetUrlSubscriber?.cancel()
         validAmountChecker?.cancel()
         fosterStatusSubscriber?.cancel()
         fosterRechargeSaveSubscriber?.cancel()
@@ -128,7 +128,7 @@ class BillingViewModel: ObservableObject {
         var queryItems = [URLQueryItem]()
         
         queryItems.append(URLQueryItem(name: "param", value: params))
-        guard var urlComponents = URLComponents(string: NetworkApiService.webBaseUrl+"/api/portal/generatebkashtoken") else {
+        guard var urlComponents = URLComponents(string: NetworkApiService.webBaseUrl+"/api/ispportal/generatebkashtoken") else {
             print("Problem in UrlComponent creation...")
             return nil
         }
@@ -211,7 +211,7 @@ class BillingViewModel: ObservableObject {
             return nil
         }
         
-        guard let urlComponents = URLComponents(string: NetworkApiService.webBaseUrl+"/api/portal/createbkashpayment") else {
+        guard let urlComponents = URLComponents(string: NetworkApiService.webBaseUrl+"/api/ispportal/createbkashpayment") else {
             print("Problem in UrlComponent creation...")
             return nil
         }
@@ -288,7 +288,7 @@ class BillingViewModel: ObservableObject {
             return nil
         }
         
-        guard let urlComponents = URLComponents(string: NetworkApiService.webBaseUrl+"/api/portal/executebkashpayment") else {
+        guard let urlComponents = URLComponents(string: NetworkApiService.webBaseUrl+"/api/ispportal/executebkashpayment") else {
             print("Problem in UrlComponent creation...")
             return nil
         }
@@ -349,15 +349,17 @@ class BillingViewModel: ObservableObject {
         let bkashJson = try? JSONSerialization.jsonObject(with: bkashData, options: .allowFragments) as? [String: Any]
 
         let user = UserLocalStorage.getLoggedUserData()
+        let loggedUser = UserLocalStorage.getUserCredentials().loggedUser
         let date = Date()
         let format = DateFormatter()
         format.dateFormat = "yyyy-MM-dd HH:mm:ss"
         let today = format.string(from: date)
-        let jsonObject = ["CloudUserID": user?.userID ?? 0,
-                          "UserTypeId": user?.userType ?? 0,
+        let jsonObject = ["ISPUserID": user?.userID ?? 0,
+                          "ProfileId": user?.profileID ?? 0,
+                          "UserTypeId": loggedUser?.userTypeId ?? 0,
                           "TransactionNo": bkashJson?["trxID"] as Any,
                           "InvoiceId": 0,
-                          "UserName": user.displayName as Any,
+                          "UserName": user?.displayName as Any,
                           "TransactionDate": today,
                           "RechargeType": "bkash",
                           "BalanceAmount": bkashJson?["amount"] as Any,
@@ -377,7 +379,7 @@ class BillingViewModel: ObservableObject {
             return nil
         }
         
-        guard let urlComponents = URLComponents(string: NetworkApiService.webBaseUrl+"/api/portal/newrechargebkashpayment") else {
+        guard let urlComponents = URLComponents(string: NetworkApiService.webBaseUrl+"/api/ispportal/newrechargebkashpayment") else {
             print("Problem in UrlComponent creation...")
             return nil
         }
@@ -420,7 +422,7 @@ class BillingViewModel: ObservableObject {
     }
     
     func getFosterPaymentUrl() {
-        self.postAmountSubscriber = self.executeGetFosterUrlApiCall()?
+        self.fosterGetUrlSubscriber = self.executeGetFosterUrlApiCall()?
             .sink(receiveCompletion: { completion in
                 switch completion {
                     case .finished:
@@ -428,7 +430,6 @@ class BillingViewModel: ObservableObject {
                     case .failure(let error):
                         self.errorToastPublisher.send((true, error.localizedDescription))
                         print(error.localizedDescription)
-                    //                        fatalError(error.localizedDescription)
                 }
             }, receiveValue: { response in
                 if let resstate = response.resdata.resstate {
@@ -444,9 +445,9 @@ class BillingViewModel: ObservableObject {
             })
     }
     
-    func executeGetFosterUrlApiCall() -> AnyPublisher<PostAmountResponse, Error>? {
-        let user = UserLocalStorage.getUser()
-        let jsonObject = ["UserID": user.userID ?? 0, "rechargeAmount": rechargeAmount] as [String : Any]
+    func executeGetFosterUrlApiCall() -> AnyPublisher<FosterResponse, Error>? {
+        let user = UserLocalStorage.getLoggedUserData()
+        let jsonObject = ["UserID": user?.userID ?? 0, "rechargeAmount": rechargeAmount, "IsActive": true ] as [String : Any]
         let jsonArray = [jsonObject]
         if !JSONSerialization.isValidJSONObject(jsonArray) {
             print("Problem in parameter creation...")
@@ -460,7 +461,7 @@ class BillingViewModel: ObservableObject {
             return nil
         }
         
-        guard let urlComponents = URLComponents(string: NetworkApiService.webBaseUrl+"/api/billclouduserclient/cloudrecharge") else {
+        guard let urlComponents = URLComponents(string: NetworkApiService.webBaseUrl+"/api/ispportal/isprecharge") else {
             print("Problem in UrlComponent creation...")
             return nil
         }
@@ -497,7 +498,7 @@ class BillingViewModel: ObservableObject {
                 return data
         }
         .retry(1)
-        .decode(type: PostAmountResponse.self, decoder: JSONDecoder())
+        .decode(type: FosterResponse.self, decoder: JSONDecoder())
         .receive(on: RunLoop.main)
         .eraseToAnyPublisher()
     }
@@ -538,7 +539,7 @@ class BillingViewModel: ObservableObject {
             return nil
         }
         
-        guard let urlComponents = URLComponents(string: NetworkApiService.webBaseUrl+"/api/billclouduserclient/cloudrechargesave") else {
+        guard let urlComponents = URLComponents(string: NetworkApiService.webBaseUrl+"/api/ispportal/isprechargesave") else {
             print("Problem in UrlComponent creation...")
             return nil
         }
@@ -594,7 +595,6 @@ class BillingViewModel: ObservableObject {
                 if let resstate = response.resdata.resstate {
                     if resstate == true {
                         self.successToastPublisher.send((true, response.resdata.message ?? "Recharge successful"))
-                        self.refreshUI()
                     } else {
                         self.errorToastPublisher.send((true, response.resdata.message ?? "Recharge not successful"))
                     }
@@ -607,16 +607,18 @@ class BillingViewModel: ObservableObject {
         let fosterData = Data(fosterModel.utf8)
         let fosterResponseModelArray = try? JSONDecoder().decode([FosterModel].self, from: fosterData)
         let fosterResponseModel = fosterResponseModelArray?[0]
-        let user = UserLocalStorage.getUser()
+        let user = UserLocalStorage.getLoggedUserData()
+        let loggedUser = UserLocalStorage.getUserCredentials().loggedUser
         let date = Date()
         let format = DateFormatter()
         format.dateFormat = "yyyy-MM-dd HH:mm:ss"
         let today = format.string(from: date)
-        let jsonObject = ["CloudUserID": user.userID ?? 0,
-                          "UserTypeId": user.userType ?? 0,
+        let jsonObject = ["ISPUserID": user?.userID ?? 0,
+                          "ProfileId": user?.profileID ?? 0,
+                          "UserTypeId": loggedUser?.userTypeId ?? 0,
                           "TransactionNo": fosterResponseModel?.MerchantTxnNo,
                           "InvoiceId": 0,
-                          "UserName": user.displayName,
+                          "UserName": user?.displayName,
                           "TransactionDate": today,
                           "RechargeType": "foster",
                           "BalanceAmount": fosterResponseModel?.TxnAmount,
@@ -638,7 +640,7 @@ class BillingViewModel: ObservableObject {
             return nil
         }
         
-        guard let urlComponents = URLComponents(string: NetworkApiService.webBaseUrl + "/api/portal/newrechargesave") else {
+        guard let urlComponents = URLComponents(string: NetworkApiService.webBaseUrl + "/api/ispportal/newrechargesave") else {
             print("Problem in UrlComponent creation...")
             return nil
         }

@@ -19,4 +19,5 @@ struct Colors {
     static let color4 = Color(red: 238.0 / 255, green: 161.0 / 255, blue: 26.0 / 255)
     static let color5 = Color(red: 239.0 / 255, green: 239.0 / 255, blue: 239.0 / 255)
     static let color6 = Color(red: 95.0 / 255, green: 95.0 / 255, blue: 95.0 / 255)
+    static let color7 = Color(red: 66.0 / 255, green: 126.0 / 255, blue: 238.0 / 255)
 }

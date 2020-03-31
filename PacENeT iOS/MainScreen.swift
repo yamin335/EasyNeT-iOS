@@ -67,7 +67,7 @@ struct MainScreen: View {
         .onAppear() {
             self.mainScreenViewModel.getUserData()
         }
-        .accentColor(Colors.greenTheme).edgesIgnoringSafeArea(.top)
+        .accentColor(Colors.greenTheme)
     }
 }
 

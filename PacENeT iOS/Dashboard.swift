@@ -168,10 +168,11 @@ struct Dashboard: View {
                     } else {
                         self.showSessionChart = false
                     }
-                    
                 }
             }.onAppear() {
                 self.dashboardViewModel.getSessionChartData()
+            }.onDisappear() {
+                self.showSessionChart = false
             }
             .navigationBarTitle(Text("Dashboard"), displayMode: .inline)
                 .navigationBarItems(leading: refreshButton, trailing: signoutButton)
@@ -192,10 +193,13 @@ struct LineChartSwiftUI: UIViewRepresentable {
     }
 
     func updateUIView(_ lineChartView: LineChartView, context: Context) {
-        setUpChart(chartView: lineChartView, sessionChartData: viewModel.sessionChartData!)
+        setUpChart(chartView: lineChartView , sessionChartDataList: viewModel.sessionChartData)
     }
 
-    func setUpChart(chartView: LineChartView, sessionChartData: [SessionChartData]) {
+    func setUpChart(chartView: LineChartView, sessionChartDataList: [SessionChartData]?) {
+        guard let sessionChartData = sessionChartDataList else {
+            return
+        }
         var labels = [String]()
         for data in sessionChartData {
             labels.append(data.dataName)
