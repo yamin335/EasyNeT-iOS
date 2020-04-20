@@ -16,6 +16,14 @@ struct Dashboard: View {
     @State private var showSignoutAlert = false
     @ObservedObject var dashboardViewModel = DashboardViewModel()
     @State private var showSessionChart = false
+    @State var showChartChangeModal = false
+    @State var showModalBackGround = false
+    @State private var selectedType = 0
+    @State private var selectedMonth = 0
+    var monthOptionsValue = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+    var monthOptions = ["January", "February", "March", "April", "May", "June", "July", "August",  "September", "October", "November", "December"]
+    var typeOptionsValue = ["monthly", "daily", "hourly"]
+    var typeOptions = ["Monthly", "Daily", "Hourly"]
     
     var signoutButton: some View {
         Button(action: {
@@ -27,6 +35,7 @@ struct Dashboard: View {
         .alert(isPresented:$showSignoutAlert) {
             Alert(title: Text("Sign Out"), message: Text("Are you sure to sign out?"), primaryButton: .destructive(Text("Yes")) {
                 self.userData.isLoggedIn = false
+                self.userData.selectedTabItem = 0
                 }, secondaryButton: .cancel(Text("No")))
         }
     }
@@ -61,7 +70,7 @@ struct Dashboard: View {
                             .fixedSize(horizontal: false, vertical: true)
                             .multilineTextAlignment(.center)
                     }
-                    .padding(.top, 30)
+                    //.padding(.top, 30)
                     .onTapGesture {
                         self.userData.selectedTabItem = 1
                     }
@@ -76,7 +85,7 @@ struct Dashboard: View {
                             .fixedSize(horizontal: false, vertical: true)
                             .multilineTextAlignment(.center)
                     }
-                    .padding(.top, 30)
+                    //.padding(.top, 30)
                     .onTapGesture {
                         self.userData.selectedTabItem = 2
                     }
@@ -86,17 +95,18 @@ struct Dashboard: View {
                             .resizable()
                             .frame(width: self.getImageSize(size: window.size.width), height: self.getImageSize(size: window.size.width))
                           
-                        Text("Payment History")
+                        Text("Bill History")
                             .frame(width: self.getImageSize(size: window.size.width))
                             .fixedSize(horizontal: false, vertical: true)
                             .multilineTextAlignment(.center)
                     }
-                    .padding(.top, 30)
+                    //.padding(.top, 30)
                     .onTapGesture {
                         self.userData.selectedTabItem = 2
                     }
                     Spacer()
                 }
+                //.background(Color.blue)
                 
                 HStack(alignment: .top) {
                     Spacer()
@@ -141,46 +151,221 @@ struct Dashboard: View {
                     }
                     Spacer()
                 }
+                //.background(Color.red)
             }
+            //.background(Color.green)
+        }
+    }
+    
+    var modalBackground: some View {
+        VStack {
+            Rectangle().background(Color.black).blur(radius: 0.5, opaque: false).opacity(0.3)
+        }
+        .zIndex(1)
+        .transition(.asymmetric(insertion: .opacity, removal: .opacity)).animation(.default)
+        .onTapGesture {
+            withAnimation {
+                self.showChartChangeModal = false
+                self.showModalBackGround = false
+                self.dashboardViewModel.restoreModalState()
+            }
+        }
+    }
+    
+    var chartChangeModal: some View {
+        GeometryReader { geometry in
+            VStack() {
+                Spacer()
+                VStack(spacing: 0) {
+                    HStack {
+                        Button(action: {
+                            withAnimation {
+                                if self.showChartChangeModal == true {
+                                    self.showChartChangeModal = false
+                                    self.showModalBackGround = false
+                                    self.dashboardViewModel.restoreModalState()
+                                }
+                            }
+                        }) {
+                            Text("Cancel")
+                                .font(.system(size: 18, weight: .regular))
+                                .foregroundColor(.blue)
+                                .padding(.leading, 20)
+                        }
+                        Spacer()
+                        Text("Filter By")
+                            .font(.title)
+                            .fontWeight(.heavy)
+                            .foregroundColor(Colors.color2)
+                            .padding()
+                        Spacer()
+                        Button(action: {
+                            withAnimation {
+                                if self.showChartChangeModal == true {
+                                    self.showChartChangeModal = false
+                                    self.showModalBackGround = false
+                                    self.dashboardViewModel.getSessionChartData(month: self.monthOptionsValue[self.selectedMonth], type: self.typeOptionsValue[self.selectedType])
+                                }
+                            }
+                        }) {
+                            Text("Done")
+                                .font(.system(size: 18, weight: .regular))
+                                .foregroundColor(.blue)
+                                .padding(.trailing, 20)
+                        }
+                    }
+                    
+                    Divider()
+                    
+                    Picker(selection: self.$selectedType, label: Text("Type:")
+                        .frame(minWidth: 50)) {
+                            ForEach(0 ..< self.typeOptions.count) {
+                                Text(self.typeOptions[$0])
+                                
+                            }
+                    }
+                    .pickerStyle(SegmentedPickerStyle())
+                    .padding(.leading, 20)
+                    .padding(.trailing, 20).padding(.top, 20)
+                    
+                    Picker(selection: self.$selectedMonth, label: Text("Month:")
+                        .frame(minWidth: 60)) {
+                            ForEach(0 ..< self.monthOptions.count) {
+                                Text(self.monthOptions[$0])
+                                
+                            }
+                    }
+                    .pickerStyle(WheelPickerStyle())
+                    .frame(minWidth: 0, maxWidth: geometry.size.width - 60)
+                    .padding(.leading, 30)
+                    .padding(.trailing, 30)
+                    
+                    
+                }
+                .background(ChatBubble(fillColor: Color.white, topLeft: 10, topRight: 10, bottomLeft: 0, bottomRight: 0))
+            }
+        }.zIndex(2)
+        .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
+        .onAppear {
+            withAnimation {
+                self.showModalBackGround = true
+            }
+        }
+        .transition(.asymmetric(insertion: .move(edge: .bottom), removal: .move(edge: .bottom))).animation(.default)
+        
+        
+    }
+    
+    var chartHeader: some View {
+        HStack(spacing: 4) {
+            Text("\(typeOptions[selectedType]) Data Traffic in:")
+                .foregroundColor(Colors.color2)
+                .padding(.leading, 16)
+//                .contextMenu {
+//                Button(action: {
+//                    // change country setting
+//                }) {
+//                    Text("Choose Country")
+//                    Image(systemName: "globe")
+//                }
+//
+//                Button(action: {
+//                    // enable geolocation
+//                }) {
+//                    Text("Detect Location")
+//                    Image(systemName: "location.circle")
+//                }
+//            }
+            
+            Text(monthOptions[selectedMonth]).fontWeight(.semibold).foregroundColor(Colors.color2)
+            
+            Spacer()
+            HStack(spacing: 4) {
+                Image(systemName: "gear")
+                    .font(.system(size: 16, weight: .bold))
+                    .imageScale(.large)
+                    .foregroundColor(Colors.color6)
+                    .padding(.leading, 8)
+                
+                Text("Change")
+                    .foregroundColor(Colors.greenTheme)
+                    .padding(.trailing, 16)
+                
+            }.onTapGesture {
+                withAnimation {
+                    if self.showChartChangeModal == false {
+                        self.dashboardViewModel.tempTypeindex = self.selectedType
+                        self.dashboardViewModel.tempMonthIndex = self.selectedMonth
+                        self.showChartChangeModal = true
+                    }
+                }
+            }
+        }.padding(.bottom, 12).padding(.top, 12)
+    }
+    
+    var chartView: some View {
+        GeometryReader { geometry in
+            ZStack(alignment: .bottom) {
+                if self.showSessionChart {
+                    LineChartSwiftUI(viewModel: self.dashboardViewModel)
+                } else {
+                    Text("No Session Data Found")
+                        .foregroundColor(Colors.color3)
+                }
+                
+            }.frame(width: geometry.size.width - 18, height: geometry.size.height)
         }
     }
     
     var body: some View {
-        NavigationView {
-            VStack {
+        ZStack {
+            VStack(spacing: 0) {
                 self.shortCutMenu.frame(minWidth: 0, maxWidth: .infinity)
+                
+                self.chartHeader
 
-                GeometryReader { geometry in
-                    ZStack {
-                        if self.showSessionChart {
-                            LineChartSwiftUI(viewModel: self.dashboardViewModel)
-                        } else {
-                            Text("No Session Data Found")
-                                .foregroundColor(Colors.color3)
-                        }
-                        
-                    }.frame(width: geometry.size.width, height: geometry.size.height - 30).padding(.top, 20)
+                self.chartView
+                
+            }.onReceive(self.dashboardViewModel.typeIndexPublisher.receive(on: RunLoop.main)) { value in
+                self.selectedType = value
+            }
+            .onReceive(self.dashboardViewModel.monthIndexPublisher.receive(on: RunLoop.main)) { value in
+                self.selectedMonth = value
+            }
+            .onReceive(self.dashboardViewModel.sessionChartDataPublisher.receive(on: RunLoop.main)) { value in
+                
+                if value {
+                    self.showSessionChart = true
+                } else {
+                    self.showSessionChart = false
                 }
-                .onReceive(self.dashboardViewModel.sessionChartDataPublisher.receive(on: RunLoop.main)) { value in
-                    
-                    if value {
-                        self.showSessionChart = true
-                    } else {
-                        self.showSessionChart = false
-                    }
+            }
+            .onAppear() {
+                let date = Date()
+                let dateFormatter = DateFormatter()
+                let calendar = dateFormatter.calendar
+                guard let month = calendar?.component(.month, from: date) else {
+                    return
                 }
-            }.onAppear() {
-                self.dashboardViewModel.getSessionChartData()
+                self.dashboardViewModel.getSessionChartData(month: month, type: "daily")
+                self.dashboardViewModel.typeIndexPublisher.send(1)
+                self.dashboardViewModel.monthIndexPublisher.send(month - 1)
             }.onDisappear() {
                 self.showSessionChart = false
             }
-            .navigationBarTitle(Text("Dashboard"), displayMode: .inline)
-                .navigationBarItems(leading: refreshButton, trailing: signoutButton)
+            
+            if showModalBackGround {
+                modalBackground
+            }
+            
+            if showChartChangeModal {
+                chartChangeModal
+            }
         }
     }
     
     func getImageSize(size: CGFloat) -> CGFloat {
-        return (size - 4*16)/3
+        return (size - 4*20)/3
     }
 }
 

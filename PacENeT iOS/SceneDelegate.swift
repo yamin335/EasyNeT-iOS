@@ -31,6 +31,14 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 //                    .environmentObject(Ring())
 //                    .environmentObject(BarChart())
             )
+            
+            // For manually hiding keyboard
+            let tapGesture = AnyGestureRecognizer(target: window, action:#selector(UIView.endEditing))
+            tapGesture.requiresExclusiveTouchType = false
+            tapGesture.cancelsTouchesInView = false
+            tapGesture.delegate = self //I don't use window as delegate to minimize possible side effects
+            window.addGestureRecognizer(tapGesture)
+            
             self.window = window
             window.makeKeyAndVisible()
         }
@@ -63,7 +71,12 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         // Use this method to save data, release shared resources, and store enough scene-specific state information
         // to restore the scene back to its current state.
     }
+}
 
-
+// For manually hiding keyboard
+extension SceneDelegate: UIGestureRecognizerDelegate {
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        return true
+    }
 }
 

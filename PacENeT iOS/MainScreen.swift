@@ -9,11 +9,20 @@
 import SwiftUI
 
 struct MainScreen: View {
-    //@State private var selection = 0
+    @State private var selection = 0
     @EnvironmentObject var userData: UserData
     @ObservedObject var mainScreenViewModel = MainScreenViewModel()
+    
+    init() {
+        // For navigation bar background color
+        UINavigationBar.appearance().barTintColor = .white
+        UINavigationBar.appearance().backgroundColor = .white
+        UITabBar.appearance().barTintColor = .white
+        UITabBar.appearance().backgroundColor = .white
+    }
+    
     var body: some View {
-        TabView(selection: $userData.selectedTabItem) {
+        TabView(selection: $selection) {
             Dashboard()
                 .tabItem {
                 VStack {
@@ -64,10 +73,14 @@ struct MainScreen: View {
             }
             .tag(4)
         }
+        .onReceive(userData.$selectedTabItem.receive(on: RunLoop.main)) { value in
+            self.selection = value
+        }
         .onAppear() {
             self.mainScreenViewModel.getUserData()
         }
-        .accentColor(Colors.greenTheme)
+        .accentColor(Colors.greenTheme).background(Color.white)
+        //.edgesIgnoringSafeArea(.top)
     }
 }
 

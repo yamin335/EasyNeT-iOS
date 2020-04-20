@@ -14,6 +14,10 @@ class DashboardViewModel: ObservableObject {
     var showLoader = PassthroughSubject<Bool, Never>()
     var sessionChartDataPublisher = PassthroughSubject<Bool, Never>()
     var sessionChartData: [SessionChartData]? = nil
+    var typeIndexPublisher = PassthroughSubject<Int, Never>()
+    var monthIndexPublisher = PassthroughSubject<Int, Never>()
+    var tempTypeindex = 0
+    var tempMonthIndex = 0
     
     //@Published var pieChartTitle = ""
     
@@ -21,8 +25,13 @@ class DashboardViewModel: ObservableObject {
         sessionChartSubscriber?.cancel()
     }
     
-    func getSessionChartData() {
-        self.sessionChartSubscriber = self.executeSessionChartApiCall()?
+    func restoreModalState() {
+        typeIndexPublisher.send(tempTypeindex)
+        monthIndexPublisher.send(tempMonthIndex)
+    }
+    
+    func getSessionChartData(month: Int, type: String) {
+        self.sessionChartSubscriber = self.executeSessionChartApiCall(month: month, type: type)?
             .sink(receiveCompletion: { completion in
                 switch completion {
                     case .finished:
@@ -40,12 +49,12 @@ class DashboardViewModel: ObservableObject {
             })
     }
     
-    func executeSessionChartApiCall() -> AnyPublisher<DashSessionResponse, Error>? {
+    func executeSessionChartApiCall(month: Int, type: String) -> AnyPublisher<DashSessionResponse, Error>? {
         let userCredentials = UserLocalStorage.getUserCredentials()
         let jsonObject = ["CompanyId": 1,
                           "userName": userCredentials.userName,
-                          "values": "daily",
-                          "month": 3] as [String : Any]
+                          "values": type,
+                          "month": month] as [String : Any]
         let jsonArray = [jsonObject]
         if !JSONSerialization.isValidJSONObject(jsonArray) {
             print("Problem in parameter creation...")

@@ -10,7 +10,9 @@ import SwiftUI
 
 struct Profile: View {
     
+    @State var isPackageSheetPresented = false
     @EnvironmentObject var userData: UserData
+    @ObservedObject var viewModel = ProfileViewModel()
     @State private var showSignoutAlert = false
     @State private var name = ""
     @State private var balance = ""
@@ -19,7 +21,8 @@ struct Profile: View {
     @State private var packageCharge = ""
     @State private var email = ""
     @State private var phone = ""
-    @State private var isPackageSheetPresented = false
+    @State private var userPackServices = [UserPackService]()
+    @State var changingUserPackService: UserPackService?
     
     var signoutButton: some View {
         Button(action: {
@@ -31,6 +34,7 @@ struct Profile: View {
         .alert(isPresented:$showSignoutAlert) {
             Alert(title: Text("Sign Out"), message: Text("Are you sure to sign out?"), primaryButton: .destructive(Text("Yes")) {
                 self.userData.isLoggedIn = false
+                self.userData.selectedTabItem = 0
                 }, secondaryButton: .cancel(Text("No")))
         }
     }
@@ -50,26 +54,6 @@ struct Profile: View {
         }
     }
     
-    var profileHeader: some View {
-        Colors.color5.overlay( HStack {
-            VStack {
-                Circle().fill(Color.white)
-                    .frame(width: 96, height: 96)
-                    .overlay(
-                        Image("profile_avater")
-                            .resizable()
-                            .frame(width: 65, height: 65))
-                
-                Text(name)
-                    .bold()
-                    .font(.system(size: 18))
-                    .font(.title)
-                    .foregroundColor(Colors.color6)
-                Spacer()
-                }.padding(.top, 24)
-        }).frame(minWidth: 0, maxWidth: .infinity, maxHeight: 175)
-    }
-    
     var balanceView: some View {
         VStack(alignment: .leading) {
             Text("Balance")
@@ -77,11 +61,11 @@ struct Profile: View {
                 .font(.system(size: 15))
                 .font(.title)
                 .foregroundColor(Color.gray)
-            Text(balance + " (BDT)")
+            Text(balance + " BDT")
                 .font(.system(size: 14))
                 .font(.body)
                 .foregroundColor(Color.gray)
-        }.padding(.leading, 16)
+        }
     }
     
     var createView: some View {
@@ -95,48 +79,7 @@ struct Profile: View {
                 .font(.system(size: 14))
                 .font(.body)
                 .foregroundColor(Color.gray)
-        }.padding(.leading, 16)
-    }
-    
-    struct PackageChangeView: View {
-        @Environment(\.presentationMode) var presentationMode
-        var body: some View {
-            NavigationView {
-                Text("Package Change View")
-                .navigationBarTitle(Text("Sheet View"), displayMode: .inline)
-                    .navigationBarItems(trailing: Button(action: {
-                        print("Dismissing sheet view...")
-                        self.presentationMode.wrappedValue.dismiss()
-                    }) {
-                        Text("Done").bold()
-                    })
-            }
         }
-    }
-    
-    var packageView: some View {
-        VStack(alignment: .leading) {
-            HStack {
-                Text("Package")
-                    .bold()
-                    .font(.system(size: 15))
-                    .font(.title)
-                    .foregroundColor(Color.gray)
-                
-                Button(action: {
-                    self.isPackageSheetPresented.toggle()
-                }) {
-                    Text("Change")
-                        .foregroundColor(Colors.color7)
-                }.sheet(isPresented: $isPackageSheetPresented, content: {
-                    PackageChangeView()
-                })
-            }
-            Text(package)
-                .font(.system(size: 14))
-                .font(.body)
-                .foregroundColor(Color.gray)
-        }.padding(.leading, 16)
     }
     
     var chargeView: some View {
@@ -150,7 +93,7 @@ struct Profile: View {
                 .font(.system(size: 14))
                 .font(.body)
                 .foregroundColor(Color.gray)
-        }.padding(.leading, 16)
+        }
     }
     
     var emailView: some View {
@@ -164,7 +107,7 @@ struct Profile: View {
                 .font(.system(size: 14))
                 .font(.body)
                 .foregroundColor(Color.gray)
-        }.padding(.leading, 16)
+        }
     }
     
     var phoneView: some View {
@@ -178,33 +121,83 @@ struct Profile: View {
                 .font(.system(size: 14))
                 .font(.body)
                 .foregroundColor(Color.gray)
-        }.padding(.leading, 16)
+        }
     }
     
     var body: some View {
         
         NavigationView {
-            VStack(alignment: .leading, spacing: 16) {
-                profileHeader
+            VStack(spacing: 0) {
+                Colors.color5.overlay( HStack {
+                    VStack {
+                        Circle().fill(Color.white)
+                            .frame(width: 96, height: 96)
+                            .overlay(
+                                Image("profile_avater")
+                                    .resizable()
+                                    .frame(width: 65, height: 65))
+                        
+                        Text(name)
+                            .bold()
+                            .font(.system(size: 18))
+                            .font(.title)
+                            .foregroundColor(Colors.color6)
+                        Spacer()
+                        }.padding(.top, 24)
+                }).frame(minWidth: 0, maxWidth: .infinity, maxHeight: 175)
                 balanceView
                 createView
-                packageView
-                chargeView
                 emailView
                 phoneView
-                Spacer()
-            }.background(Color.white).navigationBarTitle(Text("Profile"), displayMode: .inline)
+                List {
+                    VStack {
+                        ForEach(userPackServices, id: \.userPackServiceId) { dataItem in
+                            VStack {
+                                PackServiceRowView(item: dataItem, viewModel: self.viewModel)
+                                if !self.viewModel.userPackServices.isLastUserPack(item: dataItem) {
+                                    Divider()
+                                }
+                            }
+                        }
+                    }
+                }
+                .onReceive(self.viewModel.$userPackServices.receive(on: RunLoop.main)) {
+                        userPackServices in
+                    withAnimation {
+                        self.userPackServices = userPackServices
+                    }
+                }
+            }
+            .onReceive(self.viewModel.showServiceChangeModal.receive(on: RunLoop.main)) { (boolData, packService) in
+                self.changingUserPackService = packService
+                self.isPackageSheetPresented = boolData
+            }
+            .onAppear {
+                self.viewModel.getUserPackServiceData()
+                self.viewModel.getPackServiceData()
+            }
+            .background(Color.white).navigationBarTitle(Text("Profile"), displayMode: .inline)
                 .navigationBarItems(leading: refreshButton, trailing: signoutButton)
-        }.onAppear() {
+        }
+        .sheet(isPresented: $isPackageSheetPresented, onDismiss: {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                self.viewModel.getUserPackServiceData()
+            }
+        }, content: {
+            PackageChangeView(viewModel: self.viewModel, changingUserPackService: self.changingUserPackService!)
+        })
+        .onAppear() {
+            let months = [0 : "", 1 : "Jan", 2 : "Feb", 3 : "Mar", 4 : "Apr", 5 : "May", 6 : "Jun", 7 : "Jul", 8 : "Aug", 9 : "Sep", 10 : "Oct", 11 : "Nov", 12 : "Dec"]
             let userInfo = UserLocalStorage.getLoggedUserData()
-            self.name = userInfo?.displayName ?? ""
+            let nameData = userInfo?.displayName ?? ""
+            self.name = nameData.isEmpty ? "No Name Provided" : nameData
             let date = userInfo?.created ?? ""
             if date.contains("T") {
                 let splits = date.split(separator: "T")
 
                 let tempSplits = (splits.count > 1 ? splits[1] : "").split(separator: ".")[0].split(separator: ":")
-
-                self.createDate = splits[0] + "  " + tempSplits[0] + ":" + tempSplits[1]
+                let dateSplits = splits[0].split(separator: "-")
+                self.createDate = "Date: \(dateSplits[2])\(months[Int(dateSplits[1]) ?? 0] ?? ""), \(dateSplits[0]) & Time: \(tempSplits[0]):\(tempSplits[1])"
             } else {
                 self.createDate = userInfo?.created ?? ""
             }
@@ -212,9 +205,93 @@ struct Profile: View {
             self.balance = String(userInfo?.balance ?? 0.0)
             self.package = userInfo?.srvName ?? ""
             self.packageCharge = String(userInfo?.unitPrice ?? 0.0)
-            self.email = userInfo?.email ?? ""
-            self.phone = userInfo?.phone ?? ""
+            let emailData = userInfo?.email ?? ""
+            self.email = emailData.isEmpty ? "N/A" : emailData
+            let phoneData = userInfo?.phone ?? ""
+            self.phone = phoneData.isEmpty ? "N/A" : phoneData
         }
+    }
+}
+
+extension String {
+    func formatDate() -> String {
+        let months = [0 : "", 1 : "Jan", 2 : "Feb", 3 : "Mar", 4 : "Apr", 5 : "May", 6 : "Jun", 7 : "Jul", 8 : "Aug", 9 : "Sep", 10 : "Oct", 11 : "Nov", 12 : "Dec"]
+        if self.contains("T") {
+            let splits = self.split(separator: "T")
+
+            let tempSplits = (splits.count > 1 ? splits[0] : "").split(separator: "-")
+
+            return "\(tempSplits[2]) \(months[Int(tempSplits[1]) ?? 0] ?? ""), \(tempSplits[0])"
+        } else {
+            let tempSplits = self.split(separator: "-")
+
+            return "\(tempSplits[2]) \(months[Int(tempSplits[1]) ?? 0] ?? ""), \(tempSplits[0])"
+        }
+    }
+}
+
+extension String {
+    func formatTime() -> String {
+        if self.contains("T") {
+            let tempStringArray = self.split(separator: "T")
+            var tempString1 = tempStringArray[1]
+            var hour = 0
+            var minute = 0
+            var seconds = 0
+            var amPm = ""
+            if (tempString1.contains(".")){
+                tempString1 = tempString1.split(separator: ".")[0]
+                hour = Int(tempString1.split(separator: ":")[0]) ?? 0
+                minute = Int(tempString1.split(separator: ":")[1]) ?? 0
+                seconds = Int(tempString1.split(separator: ":")[2]) ?? 0
+                amPm = ""
+                if hour > 12 {
+                    hour -= 12
+                    amPm = "PM"
+                } else if hour == 0 {
+                    hour += 12
+                    amPm = "AM"
+                } else if hour == 12 {
+                    amPm = "PM"
+                } else {
+                    amPm = "AM"
+                }
+            } else {
+                hour = Int(tempString1.split(separator: ":")[0]) ?? 0
+                minute = Int(tempString1.split(separator: ":")[1]) ?? 0
+                seconds = Int(tempString1.split(separator: ":")[2]) ?? 0
+                amPm = ""
+                if hour > 12 {
+                    hour -= 12
+                    amPm = "PM"
+                } else if hour == 0 {
+                    hour += 12
+                    amPm = "AM"
+                } else if hour == 12 {
+                    amPm = "PM"
+                } else {
+                    amPm = "AM"
+                }
+            }
+            return "\(hour):\(minute) \(amPm)"
+        }
+        return ""
+    }
+}
+
+extension RandomAccessCollection where Self.Element == UserPackService {
+    
+    func isLastUserPack(item: UserPackService) -> Bool {
+        guard !isEmpty else {
+            return false
+        }
+        
+        guard let itemIndex = firstIndex(where: { $0.packServiceId == item.packServiceId }) else {
+            return false
+        }
+        
+        let distance = self.distance(from: itemIndex, to: endIndex)
+        return distance == 1
     }
 }
 

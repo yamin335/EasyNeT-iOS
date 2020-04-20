@@ -35,6 +35,7 @@ struct MoreMenu: View {
         .alert(isPresented:$showSignoutAlert) {
             Alert(title: Text("Sign Out"), message: Text("Are you sure to sign out?"), primaryButton: .destructive(Text("Yes")) {
                 self.userData.isLoggedIn = false
+                self.userData.selectedTabItem = 0
                 }, secondaryButton: .cancel(Text("No")))
         }
     }

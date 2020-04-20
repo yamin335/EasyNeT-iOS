@@ -34,4 +34,17 @@ struct LoggedUserData: Codable {
     let created: String?
     let companyName: String?
     let Address: String?
+    let userCode: String?
+    let userPass: String?
+    let ownerId: String?
+    let profile: String?
+    let enabled: Bool?
+    let expiration: String?
+    let createdBy: String?
+    let createDate: String?
+    let lastIp: String?
+    let lastLogin: String?
+    let billingPlan: Bool?
+    let userTypeId: Int?
+    let userType: String?
 }
