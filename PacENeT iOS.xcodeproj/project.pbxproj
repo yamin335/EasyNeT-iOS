@@ -19,6 +19,7 @@
 		6E10E2CC2433B8320082F4C8 /* ProfileViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E10E2CB2433B8320082F4C8 /* ProfileViewModel.swift */; };
 		6E10E2CE243662130082F4C8 /* UITestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E10E2CD243662130082F4C8 /* UITestView.swift */; };
 		6E186D5C243E747200AEA4F1 /* SupportTicketDetail.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E186D5B243E747200AEA4F1 /* SupportTicketDetail.swift */; };
+		6E2B71E6244E8DDC00C79A0E /* MailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E2B71E5244E8DDC00C79A0E /* MailView.swift */; };
 		6E51D92724417ACD00C09D9F /* SupportTicketEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E51D92624417ACD00C09D9F /* SupportTicketEntry.swift */; };
 		6E67D1B8243E1C83000B11FB /* SupportModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E67D1B7243E1C83000B11FB /* SupportModels.swift */; };
 		6E67D1BC243E39AD000B11FB /* SupportTicketRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E67D1BB243E39AD000B11FB /* SupportTicketRow.swift */; };
@@ -126,6 +127,7 @@
 		6E10E2CB2433B8320082F4C8 /* ProfileViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileViewModel.swift; sourceTree = "<group>"; };
 		6E10E2CD243662130082F4C8 /* UITestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UITestView.swift; sourceTree = "<group>"; };
 		6E186D5B243E747200AEA4F1 /* SupportTicketDetail.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportTicketDetail.swift; sourceTree = "<group>"; };
+		6E2B71E5244E8DDC00C79A0E /* MailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MailView.swift; sourceTree = "<group>"; };
 		6E51D92624417ACD00C09D9F /* SupportTicketEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportTicketEntry.swift; sourceTree = "<group>"; };
 		6E67D1B7243E1C83000B11FB /* SupportModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportModels.swift; sourceTree = "<group>"; };
 		6E67D1BB243E39AD000B11FB /* SupportTicketRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportTicketRow.swift; sourceTree = "<group>"; };
@@ -300,6 +302,7 @@
 				6E10E2CD243662130082F4C8 /* UITestView.swift */,
 				6E0DEDDF244B359300E2639F /* Utils.swift */,
 				6EDA0078244A0294006BC870 /* Extensions.swift */,
+				6E2B71E5244E8DDC00C79A0E /* MailView.swift */,
 				FD8CC99023B1D763001CDBD1 /* Assets.xcassets */,
 				FD8CC99523B1D763001CDBD1 /* LaunchScreen.storyboard */,
 				FD8CC99223B1D763001CDBD1 /* Preview Content */,
@@ -500,6 +503,7 @@
 				6E0DEDF1244BB1B900E2639F /* PaymentGatewayView.swift in Sources */,
 				6EA2F9EF2444B9D200340EB0 /* InvoiceDetailView.swift in Sources */,
 				FD9362E823B4D42700C1A9CB /* ColorValues.swift in Sources */,
+				6E2B71E6244E8DDC00C79A0E /* MailView.swift in Sources */,
 				6E0DEDE8244B8A6E00E2639F /* FosterWebView.swift in Sources */,
 				6EA2F9E92444B83400340EB0 /* InvoiceView.swift in Sources */,
 				FD9362EF23B4D45600C1A9CB /* NetworkApiService.swift in Sources */,
@@ -712,10 +716,12 @@
 				EMBED_ASSET_PACKS_IN_PRODUCT_BUNDLE = YES;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = "PacENeT iOS/Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "ltd.royalgreen.PacENeT-iOS";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -736,10 +742,12 @@
 				EMBED_ASSET_PACKS_IN_PRODUCT_BUNDLE = YES;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = "PacENeT iOS/Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MARKETING_VERSION = 1.0.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = "ltd.royalgreen.PacENeT-iOS";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -755,6 +763,7 @@
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 9D93WZA28F;
 				INFOPLIST_FILE = "PacENeT iOSTests/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 13.2;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -776,6 +785,7 @@
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 9D93WZA28F;
 				INFOPLIST_FILE = "PacENeT iOSTests/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 13.2;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -796,6 +806,7 @@
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 9D93WZA28F;
 				INFOPLIST_FILE = "PacENeT iOSUITests/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -815,6 +826,7 @@
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 9D93WZA28F;
 				INFOPLIST_FILE = "PacENeT iOSUITests/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

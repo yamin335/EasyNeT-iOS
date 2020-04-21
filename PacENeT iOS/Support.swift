@@ -14,6 +14,7 @@ struct Support: View {
     @ObservedObject var viewModel = SupportViewModel()
     @State private var showSignoutAlert = false
     @State private var isLoading: Bool = false
+    @State private var showLoader = false
     private let offset: Int = 10
     
     var signoutButton: some View {
@@ -33,9 +34,7 @@ struct Support: View {
     
     var refreshButton: some View {
         Button(action: {
-            self.viewModel.pageNumber = -1
-            self.viewModel.supportTicketList.removeAll()
-            self.viewModel.getSupportTicketList()
+            self.viewModel.refreshUI()
         }) {
             Image(systemName: "arrow.clockwise")
                 .font(.system(size: 18, weight: .light))
@@ -56,12 +55,19 @@ struct Support: View {
     
     var body: some View {
         NavigationView {
-            List(self.viewModel.supportTicketList, id: \.ispTicketId) { item in
-                NavigationLink(destination: SupportTicketDetail(viewModel: self.viewModel, item: item)) {
-                    SupportTicketRow(item: item)
+            ZStack {
+                List(self.viewModel.supportTicketList, id: \.ispTicketId) { item in
+                    NavigationLink(destination: SupportTicketDetail(viewModel: self.viewModel, item: item)) {
+                        SupportTicketRow(item: item).onAppear {
+                            self.listItemAppears(item: item)
+                        }
+                    }
+                }.onDisappear {
+                    UITableView.appearance().separatorStyle = .singleLine
                 }
-            }.onDisappear {
-                UITableView.appearance().separatorStyle = .singleLine
+            }
+            .onReceive(self.viewModel.showLoader.receive(on: RunLoop.main)) { shouldShow in
+                self.showLoader = shouldShow
             }
             .onAppear {
                 self.viewModel.pageNumber = -1
@@ -70,6 +76,10 @@ struct Support: View {
             }
             .navigationBarTitle(Text("Support"))
                 .navigationBarItems(leading: refreshButton, trailing: newTicket)
+            
+            if self.showLoader {
+                SpinLoaderView()
+            }
         }
     }
 }
@@ -111,7 +121,7 @@ extension RandomAccessCollection where Self.Element == SupportTicket {
 }
 
 extension Support {
-    private func listItemAppears(_ item: SupportTicket) {
+    private func listItemAppears(item: SupportTicket) {
         if self.viewModel.supportTicketList.isThresholdItem(offset: offset,
                                           item: item) {
             print("Paging Working...")

@@ -15,12 +15,10 @@ struct SupportTicketRow: View {
             VStack(alignment: .leading, spacing: 0) {
                 Text(item.ticketSummary ?? "Unknown")
                     .font(.headline)
-                    .padding(.leading, 16)
                     .lineLimit(2)
                     .foregroundColor(.black)
                 Text("No: \(item.ispTicketNo ?? "N/A")")
                     .font(.subheadline)
-                    .padding(.leading, 16)
                     .padding(.top, 4)
                     .foregroundColor(.gray)
             }
@@ -35,7 +33,6 @@ struct SupportTicketRow: View {
             }
             .background(getStatusColor(status: item.status ?? "N/A"))
             .cornerRadius(5)
-            .padding()
         }
     }
 }

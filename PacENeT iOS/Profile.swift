@@ -23,6 +23,7 @@ struct Profile: View {
     @State private var phone = ""
     @State private var userPackServices = [UserPackService]()
     @State var changingUserPackService: UserPackService?
+    @State private var showLoader = false
     
     var signoutButton: some View {
         Button(action: {
@@ -41,8 +42,7 @@ struct Profile: View {
     
     var refreshButton: some View {
         Button(action: {
-            //            self.viewModel.refreshUI()
-            
+            self.viewModel.refreshUI()
         }) {
             Image(systemName: "arrow.clockwise")
                 .font(.system(size: 18, weight: .light))
@@ -52,6 +52,26 @@ struct Profile: View {
                 .foregroundColor(Colors.greenTheme)
             
         }
+    }
+    
+    var profileHeader: some View {
+        Colors.color5.overlay( HStack {
+            VStack {
+                Circle().fill(Color.white)
+                    .frame(width: 96, height: 96)
+                    .overlay(
+                        Image("profile_avater")
+                            .resizable()
+                            .frame(width: 65, height: 65))
+                
+                Text(name)
+                    .bold()
+                    .font(.system(size: 18))
+                    .font(.title)
+                    .foregroundColor(Colors.color6)
+                Spacer()
+                }.padding(.top, 24)
+        }).frame(minWidth: 0, maxWidth: .infinity, maxHeight: 175)
     }
     
     var balanceView: some View {
@@ -127,57 +147,67 @@ struct Profile: View {
     var body: some View {
         
         NavigationView {
-            VStack(spacing: 0) {
-                Colors.color5.overlay( HStack {
-                    VStack {
-                        Circle().fill(Color.white)
-                            .frame(width: 96, height: 96)
-                            .overlay(
-                                Image("profile_avater")
-                                    .resizable()
-                                    .frame(width: 65, height: 65))
-                        
-                        Text(name)
-                            .bold()
-                            .font(.system(size: 18))
-                            .font(.title)
-                            .foregroundColor(Colors.color6)
-                        Spacer()
-                        }.padding(.top, 24)
-                }).frame(minWidth: 0, maxWidth: .infinity, maxHeight: 175)
-                balanceView
-                createView
-                emailView
-                phoneView
-                List {
-                    VStack {
-                        ForEach(userPackServices, id: \.userPackServiceId) { dataItem in
-                            VStack {
-                                PackServiceRowView(item: dataItem, viewModel: self.viewModel)
-                                if !self.viewModel.userPackServices.isLastUserPack(item: dataItem) {
-                                    Divider()
+            ZStack {
+                VStack(alignment: .leading, spacing: 0) {
+                    profileHeader
+                    Text("Personal Information")
+                        .font(.system(size: 17))
+                        .fontWeight(.heavy)
+                        .underline(true, color: .gray)
+                        .padding(.top, 8)
+                        .padding(.bottom, 6)
+                        .padding(.leading, 16)
+                        .padding(.trailing, 16)
+                        .foregroundColor(.gray)
+                    
+                    balanceView.padding(.leading, 16).padding(.trailing, 16).padding(.top, 5)
+                    createView.padding(.leading, 16).padding(.trailing, 16).padding(.top, 8)
+                    emailView.padding(.leading, 16).padding(.trailing, 16).padding(.top, 8)
+                    phoneView.padding(.leading, 16).padding(.trailing, 16).padding(.top, 8)
+                    Text("Your Services")
+                    .font(.system(size: 17))
+                    .fontWeight(.heavy)
+                    .padding(.top, 20)
+                    .padding(.leading, 16)
+                    .padding(.trailing, 16)
+                    .foregroundColor(.gray)
+                    List {
+                        VStack {
+                            ForEach(userPackServices, id: \.userPackServiceId) { dataItem in
+                                VStack {
+                                    PackServiceRowView(item: dataItem, viewModel: self.viewModel)
+                                    if !self.viewModel.userPackServices.isLastUserPack(item: dataItem) {
+                                        Divider()
+                                    }
                                 }
                             }
                         }
                     }
-                }
-                .onReceive(self.viewModel.$userPackServices.receive(on: RunLoop.main)) {
-                        userPackServices in
-                    withAnimation {
-                        self.userPackServices = userPackServices
+                    .onReceive(self.viewModel.showLoader.receive(on: RunLoop.main)) { shouldShow in
+                        self.showLoader = shouldShow
+                    }
+                    .onReceive(self.viewModel.$userPackServices.receive(on: RunLoop.main)) {
+                            userPackServices in
+                        withAnimation {
+                            self.userPackServices = userPackServices
+                        }
                     }
                 }
+                .onReceive(self.viewModel.showServiceChangeModal.receive(on: RunLoop.main)) { (boolData, packService) in
+                    self.changingUserPackService = packService
+                    self.isPackageSheetPresented = boolData
+                }
+                .onAppear {
+                    self.viewModel.getUserPackServiceData()
+                    self.viewModel.getPackServiceData()
+                }
+                .background(Color.white).navigationBarTitle(Text("Profile"), displayMode: .inline)
+                    .navigationBarItems(leading: refreshButton)
+                
+                if self.showLoader {
+                    SpinLoaderView()
+                }
             }
-            .onReceive(self.viewModel.showServiceChangeModal.receive(on: RunLoop.main)) { (boolData, packService) in
-                self.changingUserPackService = packService
-                self.isPackageSheetPresented = boolData
-            }
-            .onAppear {
-                self.viewModel.getUserPackServiceData()
-                self.viewModel.getPackServiceData()
-            }
-            .background(Color.white).navigationBarTitle(Text("Profile"), displayMode: .inline)
-                .navigationBarItems(leading: refreshButton, trailing: signoutButton)
         }
         .sheet(isPresented: $isPackageSheetPresented, onDismiss: {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -237,13 +267,13 @@ extension String {
             var tempString1 = tempStringArray[1]
             var hour = 0
             var minute = 0
-            var seconds = 0
+            //var seconds = 0
             var amPm = ""
             if (tempString1.contains(".")){
                 tempString1 = tempString1.split(separator: ".")[0]
                 hour = Int(tempString1.split(separator: ":")[0]) ?? 0
                 minute = Int(tempString1.split(separator: ":")[1]) ?? 0
-                seconds = Int(tempString1.split(separator: ":")[2]) ?? 0
+                //seconds = Int(tempString1.split(separator: ":")[2]) ?? 0
                 amPm = ""
                 if hour > 12 {
                     hour -= 12
@@ -259,7 +289,7 @@ extension String {
             } else {
                 hour = Int(tempString1.split(separator: ":")[0]) ?? 0
                 minute = Int(tempString1.split(separator: ":")[1]) ?? 0
-                seconds = Int(tempString1.split(separator: ":")[2]) ?? 0
+                //seconds = Int(tempString1.split(separator: ":")[2]) ?? 0
                 amPm = ""
                 if hour > 12 {
                     hour -= 12

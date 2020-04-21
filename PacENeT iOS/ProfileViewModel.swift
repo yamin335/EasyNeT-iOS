@@ -330,4 +330,9 @@ class ProfileViewModel: ObservableObject {
         .receive(on: RunLoop.main)
         .eraseToAnyPublisher()
     }
+    
+    func refreshUI() {
+        getUserPackServiceData()
+        getPackServiceData()
+    }
 }

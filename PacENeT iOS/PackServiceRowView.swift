@@ -45,7 +45,7 @@ struct PackServiceRowView: View {
                         .padding(.all, 1)
                 }
                 
-                Text("Price: \(item.packServicePrice ?? 0.0) BDT")
+                Text("Price: \(item.packServicePrice?.rounded(toPlaces: 2) ?? "0.0") BDT")
                     .foregroundColor(.gray)
                     .font(.system(size: 14))
                     .font(.body)

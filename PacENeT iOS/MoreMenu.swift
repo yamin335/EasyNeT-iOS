@@ -13,6 +13,7 @@ struct MoreMenu: View {
     @EnvironmentObject var userData: UserData
     @State private var showSignoutAlert = false
     @State private var showChangePassModal = false
+    @State private var showChoiceBackground = false
     @State private var showOldPassError = false
     @State private var showSamePassError = false
     @State private var showPassMisMatchError = false
@@ -34,6 +35,8 @@ struct MoreMenu: View {
         }
         .alert(isPresented:$showSignoutAlert) {
             Alert(title: Text("Sign Out"), message: Text("Are you sure to sign out?"), primaryButton: .destructive(Text("Yes")) {
+                UserLocalStorage.clearLoggedUserData()
+                UserLocalStorage.clearUserCredentials()
                 self.userData.isLoggedIn = false
                 self.userData.selectedTabItem = 0
                 }, secondaryButton: .cancel(Text("No")))
@@ -41,92 +44,96 @@ struct MoreMenu: View {
     }
     
     var changePasswordModal: some View {
-        ZStack {
-            Color.black
-                .blur(radius: 0.5, opaque: false)
-                .opacity(0.4)
-                .edgesIgnoringSafeArea(.all)
-            VStack(alignment: .leading, spacing: 0) {
-                Text("Change Password")
-                    .font(.system(size: 24))
+        VStack(alignment: .leading, spacing: 0) {
+            Text("Change Password")
+                .font(.system(size: 24))
+                .fontWeight(.light)
+                .foregroundColor(Colors.color2)
+                .padding(.leading, 20).padding(.trailing, 20).padding(.top, 8)
+            SecureField("Old Password", text: $viewModel.oldPassword)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .padding(.leading, 20).padding(.trailing, 20).padding(.top, 12)
+            if showOldPassError {
+                Text("Wrong Old Password!")
+                    .font(.caption)
                     .fontWeight(.light)
-                    .foregroundColor(Colors.color2)
-                    .padding(.leading, 20).padding(.trailing, 20).padding(.top, 8)
-                SecureField("Old Password", text: $viewModel.oldPassword)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .padding(.leading, 20).padding(.trailing, 20).padding(.top, 12)
-                if showOldPassError {
-                    Text("Wrong Old Password!")
-                        .font(.caption)
-                        .fontWeight(.light)
-                        .foregroundColor(Color.red)
-                        .padding(.leading, 20).padding(.trailing, 20)
-                }
-                SecureField("New Password", text: $viewModel.newPassword)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .padding(.leading, 20).padding(.trailing, 20).padding(.top, 12)
-                if showSamePassError {
-                    Text(newPassErrorMessage)
-                        .font(.caption)
-                        .fontWeight(.light)
-                        .foregroundColor(Color.red)
-                        .padding(.leading, 20).padding(.trailing, 20)
-                }
-                SecureField("Confirm Password", text: $viewModel.newConfPassword)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .padding(.leading, 20).padding(.trailing, 20).padding(.top, 12)
-                if showPassMisMatchError {
-                    Text("Password Mismatched!")
-                        .font(.caption)
-                        .fontWeight(.light)
-                        .foregroundColor(Color.red)
-                        .padding(.leading, 20).padding(.trailing, 20)
-                }
-                HStack(alignment: .center, spacing: 20) {
-                    Spacer()
-                    
-                    Button(action: {
-                        withAnimation {
-                            self.showChangePassModal = false
-                            self.clearTextFields()
-                        }
-                    }) {
-                        Text("Close")
-                            .fontWeight(.light)
-                            .padding(.top, 6)
-                            .padding(.bottom, 6)
-                            .padding(.leading, 16)
-                            .padding(.trailing, 16)
-                            .foregroundColor(.red)
-                            .background(RoundedRectangle(cornerRadius: 4, style: .circular).fill(Colors.whiteGray))
+                    .foregroundColor(Color.red)
+                    .padding(.leading, 20).padding(.trailing, 20)
+            }
+            SecureField("New Password", text: $viewModel.newPassword)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .padding(.leading, 20).padding(.trailing, 20).padding(.top, 12)
+            if showSamePassError {
+                Text(newPassErrorMessage)
+                    .font(.caption)
+                    .fontWeight(.light)
+                    .foregroundColor(Color.red)
+                    .padding(.leading, 20).padding(.trailing, 20)
+            }
+            SecureField("Confirm Password", text: $viewModel.newConfPassword)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .padding(.leading, 20).padding(.trailing, 20).padding(.top, 12)
+            if showPassMisMatchError {
+                Text("Password Mismatched!")
+                    .font(.caption)
+                    .fontWeight(.light)
+                    .foregroundColor(Color.red)
+                    .padding(.leading, 20).padding(.trailing, 20)
+            }
+            HStack(alignment: .center, spacing: 20) {
+                Spacer()
+                
+                Button(action: {
+                    withAnimation {
+                        self.showChangePassModal = false
+                        self.showChoiceBackground = false
+                        self.clearTextFields()
                     }
-                    
-                    Button(action: {
-                        withAnimation {
-                            self.showChangePassModal = false
-                            self.clearTextFields()
-                            self.viewModel.changePassword()
-                        }
-                    }) {
-                        Text("Save")
-                            .fontWeight(.light)
-                            .padding(.top, 6)
-                            .padding(.bottom, 6)
-                            .padding(.leading, 16)
-                            .padding(.trailing, 16)
-                            .foregroundColor(Colors.greenTheme)
-                            .background(RoundedRectangle(cornerRadius: 4, style: .circular).fill(Colors.whiteGray))
-                    }.disabled(!enableSaveButton)
+                }) {
+                    Text("Close")
+                        .fontWeight(.light)
+                        .padding(.top, 6)
+                        .padding(.bottom, 6)
+                        .padding(.leading, 16)
+                        .padding(.trailing, 16)
+                        .foregroundColor(.red)
+                        .background(RoundedRectangle(cornerRadius: 4, style: .circular).fill(Colors.whiteGray))
                 }
-                .padding(.leading, 20)
-                .padding(.trailing, 20)
-                .padding(.top, 20)
-                .padding(.bottom, 20)
-            }.frame(minWidth: 0, maxWidth: .infinity)
-                .background(RoundedRectangle(cornerRadius: 6, style: .circular).fill(Color.white))
-                .padding(.leading, 25)
-                .padding(.trailing, 25)
+                
+                Button(action: {
+                    withAnimation {
+                        self.showChangePassModal = false
+                        self.showChoiceBackground = false
+                        self.clearTextFields()
+                        //self.viewModel.changePassword()
+                    }
+                }) {
+                    Text("Save")
+                        .fontWeight(.light)
+                        .padding(.top, 6)
+                        .padding(.bottom, 6)
+                        .padding(.leading, 16)
+                        .padding(.trailing, 16)
+                        .foregroundColor(Colors.greenTheme)
+                        .background(RoundedRectangle(cornerRadius: 4, style: .circular).fill(Colors.whiteGray))
+                }.disabled(!enableSaveButton)
+            }
+            .padding(.leading, 20)
+            .padding(.trailing, 20)
+            .padding(.top, 20)
+            .padding(.bottom, 20)
         }
+        .frame(minWidth: 0, maxWidth: .infinity)
+        .background(RoundedRectangle(cornerRadius: 6, style: .circular).fill(Color.white))
+        .padding(.leading, 25)
+        .padding(.trailing, 25)
+        .zIndex(2)
+        .onAppear {
+            withAnimation {
+                self.showChoiceBackground = true
+            }
+        }
+        .transition(.asymmetric(insertion: .opacity, removal: .opacity)).animation(.default)
     }
     
     var body: some View {
@@ -145,6 +152,20 @@ struct MoreMenu: View {
                     }
                 }.navigationBarTitle(Text("More"))
                     .navigationBarItems(trailing: signoutButton)
+                
+                if showChoiceBackground {
+                    VStack {
+                        Rectangle().background(Color.black).blur(radius: 0.5, opaque: false).opacity(0.3)
+                    }
+                    .zIndex(1)
+                    .transition(.asymmetric(insertion: .opacity, removal: .opacity)).animation(.default)
+                    .onTapGesture {
+                        withAnimation {
+                            self.showChangePassModal = false
+                            self.showChoiceBackground = false
+                        }
+                    }
+                }
                 
                 if showChangePassModal {
                     changePasswordModal.edgesIgnoringSafeArea(.all)

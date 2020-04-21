@@ -41,8 +41,11 @@ struct Billing: View {
     // MARK: - refreshButton
     var refreshButton: some View {
         Button(action: {
-            //            self.viewModel.refreshUI()
-            
+            if self.selectedOption == 0 {
+                self.viewModel.refreshInvoice()
+            } else if self.selectedOption == 1 {
+                self.viewModel.refreshPayment()
+            }
         }) {
             Image(systemName: "arrow.clockwise")
                 .font(.system(size: 18, weight: .light))

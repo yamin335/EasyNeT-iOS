@@ -22,6 +22,7 @@ struct SupportTicketDetail: View {
     @State private var image: Image?
     @State private var imageName: String?
     @State private var imageSize: String?
+    @State private var showLoader = false
     
     var body: some View {
         ZStack {
@@ -124,6 +125,8 @@ struct SupportTicketDetail: View {
                         .padding(.top, 16)
                         .padding(.bottom, 16)
                     }
+                }.onReceive(self.viewModel.showLoader.receive(on: RunLoop.main)) { shouldShow in
+                    self.showLoader = shouldShow
                 }
             }.modifier(ViewModifierOnKeyboardAppear())
             
@@ -178,8 +181,7 @@ struct SupportTicketDetail: View {
                             }
                         }
                         
-                        Picker(selection: $selectedOption, label: Text("From:")
-                            .frame(minWidth: 100)) {
+                        Picker(selection: $selectedOption, label: Text("From:")) {
                                 ForEach(0 ..< options.count) {
                                     Text(self.options[$0])
                                     
@@ -190,7 +192,7 @@ struct SupportTicketDetail: View {
                         .padding(.trailing, 20)
                         .padding(.bottom, 40)
                     }
-                    .background(Color.white)
+                    .background(ChatBubble(fillColor: .white, topLeft: 10, topRight: 10, bottomLeft: 0, bottomRight: 0))
                 }
                 .zIndex(2)
                 .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
@@ -201,7 +203,13 @@ struct SupportTicketDetail: View {
                 }
                 .transition(.asymmetric(insertion: .move(edge: .bottom), removal: .move(edge: .bottom))).animation(.default)
             }
-        }.onAppear {
+            if self.showLoader {
+                SpinLoaderView()
+            }
+        }.onDisappear() {
+            self.viewModel.choosenImage = nil
+        }
+        .onAppear {
             UITableView.appearance().tableFooterView = UIView()
             UITableView.appearance().separatorStyle = .none
         }

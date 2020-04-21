@@ -19,6 +19,8 @@ class SupportViewModel: ObservableObject {
     var newEntryPublisher = PassthroughSubject<Bool, Never>()
     var objectWillChange = PassthroughSubject<Bool, Never>()
     var showLoader = PassthroughSubject<Bool, Never>()
+    var errorToastPublisher = PassthroughSubject<(Bool, String), Never>()
+    var successToastPublisher = PassthroughSubject<(Bool, String), Never>()
     var pageNumber = -1
     var choosenImage: ImageData?
     
@@ -305,6 +307,7 @@ class SupportViewModel: ObservableObject {
                 if let resstate = response.resdata.resstate {
                     if resstate == true {
                         self.newEntryPublisher.send(true)
+                        self.successToastPublisher.send((true, "Saved Successfully!"))
                         self.choosenImageList.removeAll()
                     }
                 }
@@ -472,6 +475,12 @@ class SupportViewModel: ObservableObject {
       data.appendString("\r\n")
 
       return data as Data
+    }
+    
+    func refreshUI() {
+        pageNumber = -1
+        supportTicketList.removeAll()
+        getSupportTicketList()
     }
 }
 

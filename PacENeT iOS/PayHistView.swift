@@ -12,7 +12,7 @@ struct PayHistView: View {
     @ObservedObject var viewModel: BillingViewModel
     @State var userType = UserLocalStorage.getLoggedUserData()?.userTypeId
     @State var showServiceListModal = false
-    
+    let listOffset: Int = 10
     
     
     // MARK: - headerView
@@ -52,18 +52,20 @@ struct PayHistView: View {
             }
         }
         .padding(.trailing, 20)
-        .padding(.bottom, 5)
+        .padding(.bottom, 2)
     }
     
     var body: some View {
-        VStack {
+        VStack(spacing: 0) {
             if userType == 1 {
                 headerViewPrePaid
             } else if userType == 2 {
                 headerViewPostPaid
             }
             List(self.viewModel.payHistList, id: \.ispPaymentID) { item in
-                PayHistRow(payHist: item)
+                PayHistRow(payHist: item).onAppear {
+                    self.paymentItemAppears(item: item)
+                }
             }
             .onAppear {
                 self.viewModel.payHistPageNumber = -1
@@ -92,21 +94,18 @@ struct PayHistRow: View {
             VStack(alignment: .leading, spacing: 0) {
                 Text(title)
                     .font(.headline)
-                    .padding(.leading, 16)
                     .lineLimit(2)
                     .foregroundColor(.black)
                 
                 Text("Time: \(payHist.transactionDate ?? "N/A")")
                     .font(.subheadline)
-                    .padding(.leading, 16)
                     .padding(.top, 4)
                     .foregroundColor(.gray)
             }
             Spacer()
             Text("\(payHist.paidAmount?.rounded(toPlaces: 2) ?? "0.0") BDT")
                 .font(.subheadline)
-                .padding(.leading, 16)
-                .padding(.trailing, 8)
+                .padding(.leading, 8)
                 .padding(.top, 6)
                 .padding(.bottom, 6)
         }
@@ -207,5 +206,48 @@ struct PayServiceBillRowView: View {
         let temp1 = item.packServiceOthersCharge ?? 0.0
         let temp2 = item.packServiceInstallCharge ?? 0.0
         return  temp1 + temp2
+    }
+}
+
+extension RandomAccessCollection where Self.Element == PayHist {
+    
+    func isLastItem(item: PayHist) -> Bool {
+        guard !isEmpty else {
+            return false
+        }
+        
+        guard let itemIndex = firstIndex(where: { $0.ispPaymentID == item.ispPaymentID }) else {
+            return false
+        }
+        
+        let distance = self.distance(from: itemIndex, to: endIndex)
+        return distance == 1
+    }
+    
+    func isThresholdItem(offset: Int, item: PayHist) -> Bool {
+        guard !isEmpty else {
+            return false
+        }
+        
+        guard let itemIndex = firstIndex(where: { $0.ispPaymentID == item.ispPaymentID }) else {
+            return false
+        }
+        
+        let distance = self.distance(from: itemIndex, to: endIndex)
+        let offset = offset < count ? offset : count - 1
+        return offset == (distance - 1)
+    }
+}
+
+extension PayHistView {
+    private func paymentItemAppears(item: PayHist) {
+        if self.viewModel.payHistList.isThresholdItem(offset: listOffset, item: item) {
+            print("Paging Working...")
+            if self.viewModel.payHistList.count > 30 {
+                //isLoading = true
+                viewModel.getUserPayHistory(value: "", SDate: "", EDate: "")
+                print("Working...")
+            }
+        }
     }
 }

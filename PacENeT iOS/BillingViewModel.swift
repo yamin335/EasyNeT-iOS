@@ -786,17 +786,13 @@ class BillingViewModel: ObservableObject {
         invoicePageNumber += 1
         let jsonObject = ["UserID": UserLocalStorage.getLoggedUserData()?.userID ?? 0, "pageNumber": invoicePageNumber, "pageSize": 30, "values": "", "SDate": "", "EDate": ""] as [String : Any]
         let jsonArray = [jsonObject]
-        if !JSONSerialization.isValidJSONObject(jsonArray) {
+
+        guard let jsonData = try? JSONSerialization.data(withJSONObject: jsonArray, options: []) else {
             print("Problem in parameter creation...")
             return nil
         }
-        let tempJson = try? JSONSerialization.data(withJSONObject: jsonArray, options: [])
-        guard let jsonData = tempJson else {
-            print("Problem in parameter creation...")
-            return nil
-        }
-        let tempParams = String(data: jsonData, encoding: String.Encoding.ascii)
-        guard let params = tempParams else {
+     
+        guard let params = String(data: jsonData, encoding: String.Encoding.ascii) else {
             print("Problem in parameter creation...")
             return nil
         }
@@ -873,17 +869,13 @@ class BillingViewModel: ObservableObject {
     func executeInvoiceDetailApiCall(SDate: String, EDate: String, CDate: String, invId: Int, userPackServiceId: Int) -> AnyPublisher<InvoiceDetailResponse, Error>? {
         let jsonObject = ["SDate": SDate, "EDate": EDate, "CDate": CDate, "invId": invId, "IspUserID": UserLocalStorage.getLoggedUserData()?.userID ?? 0, "userPackServiceId": userPackServiceId] as [String : Any]
         let jsonArray = [jsonObject]
-        if !JSONSerialization.isValidJSONObject(jsonArray) {
+
+        guard let jsonData = try? JSONSerialization.data(withJSONObject: jsonArray, options: []) else {
             print("Problem in parameter creation...")
             return nil
         }
-        let tempJson = try? JSONSerialization.data(withJSONObject: jsonArray, options: [])
-        guard let jsonData = tempJson else {
-            print("Problem in parameter creation...")
-            return nil
-        }
-        let tempParams = String(data: jsonData, encoding: String.Encoding.ascii)
-        guard let params = tempParams else {
+    
+        guard let params = String(data: jsonData, encoding: String.Encoding.ascii) else {
             print("Problem in parameter creation...")
             return nil
         }
@@ -962,17 +954,13 @@ class BillingViewModel: ObservableObject {
         payHistPageNumber += 1
         let jsonObject = ["UserID": UserLocalStorage.getLoggedUserData()?.userID ?? 0, "pageNumber": payHistPageNumber, "pageSize": 30, "values": value , "SDate": SDate, "EDate": EDate] as [String : Any]
         let jsonArray = [jsonObject]
-        if !JSONSerialization.isValidJSONObject(jsonArray) {
+
+        guard let jsonData = try? JSONSerialization.data(withJSONObject: jsonArray, options: []) else {
             print("Problem in parameter creation...")
             return nil
         }
-        let tempJson = try? JSONSerialization.data(withJSONObject: jsonArray, options: [])
-        guard let jsonData = tempJson else {
-            print("Problem in parameter creation...")
-            return nil
-        }
-        let tempParams = String(data: jsonData, encoding: String.Encoding.ascii)
-        guard let params = tempParams else {
+  
+        guard let params = String(data: jsonData, encoding: String.Encoding.ascii) else {
             print("Problem in parameter creation...")
             return nil
         }
@@ -1036,17 +1024,13 @@ class BillingViewModel: ObservableObject {
     func executeUserBalanceApiCall() -> AnyPublisher<UserBalanceResponse, Error>? {
         let jsonObject = ["UserID": UserLocalStorage.getLoggedUserData()?.userID ?? 0]
         let jsonArray = [jsonObject]
-        if !JSONSerialization.isValidJSONObject(jsonArray) {
+
+        guard let jsonData = try? JSONSerialization.data(withJSONObject: jsonArray, options: []) else {
             print("Problem in parameter creation...")
             return nil
         }
-        let tempJson = try? JSONSerialization.data(withJSONObject: jsonArray, options: [])
-        guard let jsonData = tempJson else {
-            print("Problem in parameter creation...")
-            return nil
-        }
-        let tempParams = String(data: jsonData, encoding: String.Encoding.ascii)
-        guard let params = tempParams else {
+       
+        guard let params = String(data: jsonData, encoding: String.Encoding.ascii) else {
             print("Problem in parameter creation...")
             return nil
         }
@@ -1115,17 +1099,13 @@ class BillingViewModel: ObservableObject {
         let userId = UserLocalStorage.getLoggedUserData()?.userID
         let jsonObject = ["id": userId]
         let jsonArray = [jsonObject]
-        if !JSONSerialization.isValidJSONObject(jsonArray) {
+
+        guard let jsonData = try? JSONSerialization.data(withJSONObject: jsonArray, options: []) else {
             print("Problem in parameter creation...")
             return nil
         }
-        let tempJson = try? JSONSerialization.data(withJSONObject: jsonArray, options: [])
-        guard let jsonData = tempJson else {
-            print("Problem in parameter creation...")
-            return nil
-        }
-        let tempParams = String(data: jsonData, encoding: String.Encoding.ascii)
-        guard let params = tempParams else {
+ 
+        guard let params = String(data: jsonData, encoding: String.Encoding.ascii) else {
             print("Problem in parameter creation...")
             return nil
         }
@@ -1185,6 +1165,24 @@ class BillingViewModel: ObservableObject {
             self.invoiceList.removeAll()
             self.payHistList.removeAll()
             self.getUserInvoiceList()
+            self.getUserPayHistory(value: "", SDate: "", EDate: "")
+        }
+    }
+    
+    func refreshInvoice() {
+        showLoader.send(true)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+            self.invoicePageNumber = -1
+            self.invoiceList.removeAll()
+            self.getUserInvoiceList()
+        }
+    }
+    
+    func refreshPayment() {
+        showLoader.send(true)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+            self.payHistPageNumber = -1
+            self.payHistList.removeAll()
             self.getUserPayHistory(value: "", SDate: "", EDate: "")
         }
     }

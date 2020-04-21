@@ -13,7 +13,7 @@ struct PrivacyView: View {
     
     var body: some View {
         VStack {
-            Text("This fucntionality is under construction")
+            Text("This fucntionality is under development")
             Button("Go Back") {
                 self.presentation.wrappedValue.dismiss()
             }

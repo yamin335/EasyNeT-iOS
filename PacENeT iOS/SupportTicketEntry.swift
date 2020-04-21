@@ -19,7 +19,7 @@ struct ImageRow: View {
                     .lineLimit(1).font(.callout)
                 Text("Size: \(item.size)").font(.caption).foregroundColor(.gray)
             }
-            
+            Spacer()
             Image(systemName: "multiply.circle.fill")
                 .font(.system(size: 18, weight: .regular))
                 .imageScale(.large)
@@ -55,10 +55,21 @@ struct SupportTicketEntry: View {
     @State private var imageSizes = [String]()
     @State var showChoise = false
     @State var showChoiseBackGround = false
+    @State var showSuccessToast = false
+    @State var successMessage: String = ""
+    @State var showErrorToast = false
+    @State var errorMessage: String = ""
+    
+    @State private var showLoader = false
     
     var submit: some View {
         Button(action: {
-            self.viewModel.saveNewTicket(ticketSummary: self.subject, ticketDescription: self.description, ispTicketCategoryId: self.viewModel.ticketCategoryList[self.selectedOption].ispTicketCategoryId)
+            if !self.subject.isEmpty && !self.description.isEmpty {
+                self.viewModel.saveNewTicket(ticketSummary: self.subject, ticketDescription: self.description, ispTicketCategoryId: self.viewModel.ticketCategoryList[self.selectedOption].ispTicketCategoryId)
+            } else {
+                self.viewModel.errorToastPublisher.send((true, "Please fill all required fields!"))
+            }
+            
         }) {
             Text("Submit")
                 .foregroundColor(.blue)
@@ -67,15 +78,16 @@ struct SupportTicketEntry: View {
     var body: some View {
         ZStack {
             VStack {
-                VStack {
-                    Picker(selection: $selectedOption, label: Text("Category").frame(minWidth: 75)) {
+                GeometryReader { geometry in
+                    Picker(selection: self.$selectedOption, label: Text("Category").frame(minWidth: 75)) {
                         ForEach(self.viewModel.ticketCategoryList, id: \.ispTicketCategoryId) { data in
                             Text(data.ticketCategory ?? "Unknown Category")
                         }
                     }
                     .pickerStyle(WheelPickerStyle())
-                }.frame(height: 150)
+                    .frame(minWidth: 0, maxWidth: geometry.size.width-60, minHeight: 0, maxHeight: 150)
                     .padding(.leading, 20)
+                }
                 
                 VStack(alignment: .leading, spacing: 5) {
                     HStack(spacing: 0) {
@@ -194,8 +206,7 @@ struct SupportTicketEntry: View {
                             }
                         }
                         
-                        Picker(selection: $selectedChoiseOption, label: Text("From:")
-                            .frame(minWidth: 100)) {
+                        Picker(selection: $selectedChoiseOption, label: Text("From:")) {
                                 ForEach(0 ..< options.count) {
                                     Text(self.options[$0])
                                     
@@ -206,7 +217,7 @@ struct SupportTicketEntry: View {
                         .padding(.trailing, 20)
                         .padding(.bottom, 40)
                     }
-                    .background(Color.white)
+                    .background(ChatBubble(fillColor: .white, topLeft: 10, topRight: 10, bottomLeft: 0, bottomRight: 0))
                 }
                 .zIndex(2)
                 .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
@@ -218,7 +229,53 @@ struct SupportTicketEntry: View {
                 .transition(.asymmetric(insertion: .move(edge: .bottom), removal: .move(edge: .bottom))).animation(.default)
             }
             
-        }.onReceive(self.viewModel.newEntryPublisher.receive(on: RunLoop.main)) { value in
+            if self.showSuccessToast {
+                VStack {
+                    Spacer()
+                    SuccessToast(message: self.successMessage).onAppear {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                            withAnimation() {
+                                self.showSuccessToast = false
+                                self.successMessage = ""
+                            }
+                        }
+                    }.padding(.all, 20)
+                }
+            }
+
+            if self.showErrorToast {
+                VStack {
+                    Spacer()
+                    ErrorToast(message: self.errorMessage).onAppear {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                            withAnimation() {
+                                self.showErrorToast = false
+                                self.errorMessage = ""
+                            }
+                        }
+                    }.padding(.all, 20)
+                }
+            }
+
+            if self.showLoader {
+                SpinLoaderView()
+            }
+            
+        }.onDisappear {
+            self.viewModel.choosenImageList.removeAll()
+        }
+        .onReceive(self.viewModel.showLoader.receive(on: RunLoop.main)) { shouldShow in
+            self.showLoader = shouldShow
+        }
+        .onReceive(self.viewModel.errorToastPublisher.receive(on: RunLoop.main)) { (shouldShow, message) in
+            self.showErrorToast = shouldShow
+            self.errorMessage = message
+        }
+        .onReceive(self.viewModel.successToastPublisher.receive(on: RunLoop.main)) { (shouldShow, message) in
+            self.showSuccessToast = shouldShow
+            self.successMessage = message
+        }
+        .onReceive(self.viewModel.newEntryPublisher.receive(on: RunLoop.main)) { value in
             if value {
                 self.presentation.wrappedValue.dismiss()
             }

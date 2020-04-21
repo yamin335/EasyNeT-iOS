@@ -20,6 +20,7 @@ struct Dashboard: View {
     @State var showModalBackGround = false
     @State private var selectedType = 0
     @State private var selectedMonth = 0
+    @State private var showLoader = false
     var monthOptionsValue = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
     var monthOptions = ["January", "February", "March", "April", "May", "June", "July", "August",  "September", "October", "November", "December"]
     var typeOptionsValue = ["monthly", "daily", "hourly"]
@@ -202,6 +203,8 @@ struct Dashboard: View {
                         Button(action: {
                             withAnimation {
                                 if self.showChartChangeModal == true {
+                                    self.dashboardViewModel.sessionChartData = [SessionChartData]()
+                                    self.dashboardViewModel.sessionChartDataPublisher.send(false)
                                     self.showChartChangeModal = false
                                     self.showModalBackGround = false
                                     self.dashboardViewModel.getSessionChartData(month: self.monthOptionsValue[self.selectedMonth], type: self.typeOptionsValue[self.selectedType])
@@ -340,6 +343,9 @@ struct Dashboard: View {
                     self.showSessionChart = false
                 }
             }
+            .onReceive(self.dashboardViewModel.showLoader.receive(on: RunLoop.main)) { shouldShow in
+                self.showLoader = shouldShow
+            }
             .onAppear() {
                 let date = Date()
                 let dateFormatter = DateFormatter()
@@ -360,6 +366,10 @@ struct Dashboard: View {
             
             if showChartChangeModal {
                 chartChangeModal
+            }
+            
+            if self.showLoader {
+                SpinLoaderView()
             }
         }
     }

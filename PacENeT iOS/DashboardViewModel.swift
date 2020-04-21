@@ -56,17 +56,13 @@ class DashboardViewModel: ObservableObject {
                           "values": type,
                           "month": month] as [String : Any]
         let jsonArray = [jsonObject]
-        if !JSONSerialization.isValidJSONObject(jsonArray) {
+
+        guard let jsonData = try? JSONSerialization.data(withJSONObject: jsonArray, options: []) else {
             print("Problem in parameter creation...")
             return nil
         }
-        let tempJson = try? JSONSerialization.data(withJSONObject: jsonArray, options: [])
-        guard let jsonData = tempJson else {
-            print("Problem in parameter creation...")
-            return nil
-        }
-        let tempParams = String(data: jsonData, encoding: String.Encoding.ascii)
-        guard let params = tempParams else {
+
+        guard let params = String(data: jsonData, encoding: String.Encoding.ascii) else {
             print("Problem in parameter creation...")
             return nil
         }
