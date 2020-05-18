@@ -12,7 +12,7 @@ import Combine
 class BillingViewModel: ObservableObject {
 
     // MARK: - Properties
-    @Published var paymentAmount: Double? = nil
+    //@Published var paymentAmount: Double? = nil
     @Published var invoiceList = [Invoice]()
     @Published var invoiceDetailList = [InvoiceDetail]() {
         willSet {
@@ -39,8 +39,9 @@ class BillingViewModel: ObservableObject {
     private var validDigits = CharacterSet(charactersIn: "1234567890.")
     
     var paymentRequest: PaymentRequest? = nil
-    var payingUserPackServiceId: Int? = nil
-    var payingInvoiceId: Int? = nil
+    var billPaymentHelper: BillPaymentHelper? = nil
+    //var payingUserPackServiceId: Int? = nil
+    //var payingInvoiceId: Int? = nil
     var invoicePageNumber = -1
     var payHistPageNumber = -1
     var objectWillChange = PassthroughSubject<Bool, Never>()
@@ -58,6 +59,7 @@ class BillingViewModel: ObservableObject {
     private var payHistSubscriber: AnyCancellable? = nil
     private var userBalanceSubscriber: AnyCancellable? = nil
     private var userPackServiceSubscriber: AnyCancellable? = nil
+    private var payFromBalanceSubscriber: AnyCancellable? = nil
     
     var showLoader = PassthroughSubject<Bool, Never>()
     var errorToastPublisher = PassthroughSubject<(Bool, String), Never>()
@@ -71,6 +73,7 @@ class BillingViewModel: ObservableObject {
     var showBkashWebViewPublisher = PassthroughSubject<Bool, Never>()
     var bkashCreatePaymentPublisher = PassthroughSubject<String, Never>()
     var bkashPaymentStatusPublisher = PassthroughSubject<(Bool, String), Never>()
+    var payFromBalancePublisher = PassthroughSubject<(Bool, String), Never>()
     
     // MARK: - deinit()
     deinit {
@@ -87,6 +90,7 @@ class BillingViewModel: ObservableObject {
         payHistSubscriber?.cancel()
         userBalanceSubscriber?.cancel()
         userPackServiceSubscriber?.cancel()
+        payFromBalanceSubscriber?.cancel()
     }
     
     // MARK: - getBkashToken()
@@ -99,6 +103,7 @@ class BillingViewModel: ObservableObject {
                         break
                     case .failure(let error):
                         print(error.localizedDescription)
+                        self.errorToastPublisher.send((true, "Payment cancelled!, please try again later"))
                 }
             }, receiveValue: { response in
                 guard let tModel = response.resdata?.tModel else {
@@ -111,33 +116,40 @@ class BillingViewModel: ObservableObject {
     }
     
     func executeGetBkashTokenApiCall() -> AnyPublisher<BKashTokenResponse, Error>? {
-        guard let userId = UserLocalStorage.getLoggedUserData()?.userID, let amount = paymentAmount else {
+        
+        guard let paymentHelper = billPaymentHelper else {
+            self.errorToastPublisher.send((true, "Payment cancelled!, please try again later"))
+            return nil
+        }
+        
+        guard let userId = UserLocalStorage.getLoggedUserData()?.userID else {
             self.errorToastPublisher.send((true, "Payment can't be processed at this time, please try again!"))
             return nil
         }
         
-        let jsonObject = ["invId": payingInvoiceId ?? 0, "id": userId, "rechargeAmount": amount, "loggedUserId": userId] as [String : Any]
+        let jsonObject = ["invId": paymentHelper.invoiceId, "id": paymentHelper.userPackServiceId, "rechargeAmount": paymentHelper.balanceAmount, "loggedUserId": userId] as [String : Any]
         let jsonArray = [jsonObject]
         
         guard let jsonData = try? JSONSerialization.data(withJSONObject: jsonArray, options: []) else {
-            print("Problem in parameter creation...")
+            self.errorToastPublisher.send((true, "Payment cancelled!, please try again later"))
             return nil
         }
         
         guard let params = String(data: jsonData, encoding: String.Encoding.ascii) else {
-            print("Problem in parameter creation...")
+            self.errorToastPublisher.send((true, "Payment cancelled!, please try again later"))
             return nil
         }
         var queryItems = [URLQueryItem]()
         
         queryItems.append(URLQueryItem(name: "param", value: params))
         guard var urlComponents = URLComponents(string: NetworkApiService.webBaseUrl+"/api/ispportal/generatebkashtoken") else {
-            print("Problem in UrlComponent creation...")
+            self.errorToastPublisher.send((true, "Payment cancelled!, please try again later"))
             return nil
         }
         urlComponents.queryItems = queryItems
         
         guard let url = urlComponents.url else {
+            self.errorToastPublisher.send((true, "Payment cancelled!, please try again later"))
             return nil
         }
         
@@ -167,6 +179,12 @@ class BillingViewModel: ObservableObject {
         .eraseToAnyPublisher()
     }
     
+    func paymentCancellation(message: String) {
+        self.errorToastPublisher.send((true, message))
+        self.showBkashWebViewPublisher.send(false)
+        self.showLoader.send(false)
+    }
+    
     // MARK: - createBkashPayment()
     // This function is called for creating bkash payment
     func createBkashPayment() {
@@ -177,51 +195,46 @@ class BillingViewModel: ObservableObject {
                         break
                     case .failure(let error):
                         print(error.localizedDescription)
+                        self.paymentCancellation(message: "Payment cancelled!, please try again later")
                 }
             }, receiveValue: { response in
                 guard let resBkash = response.resdata?.resbKash else {
-                    self.errorToastPublisher.send((true, "Can not create payment, please try again!"))
-                    self.showBkashWebViewPublisher.send(false)
-                    self.showLoader.send(false)
+                    self.paymentCancellation(message: response.resdata?.message ?? "Payment cancelled!, please try again later")
                     return
                 }
                 if !resBkash.isEmpty {
                     self.bkashCreatePaymentPublisher.send(resBkash)
                 } else {
-                    self.errorToastPublisher.send((true, response.resdata?.message ?? "Can not create payment, please try again!"))
-                    self.showBkashWebViewPublisher.send(false)
-                    self.showLoader.send(false)
+                    self.paymentCancellation(message: response.resdata?.message ?? "Payment cancelled!, please try again later")
                 }
             })
     }
     
     func createBkashPaymentApiCall() -> AnyPublisher<BKashCreatePaymentResponse, Error>? {
-        guard let token = bkashTokenModel?.idtoken else {
-            return nil
-        }
-        
-        guard let amount = paymentAmount, let currency = bkashTokenModel?.currency, let marchantInvNo = bkashTokenModel?.marchantInvNo else {
+        guard let paymentHelper = billPaymentHelper, let token = bkashTokenModel?.idtoken, let currency = bkashTokenModel?.currency, let marchantInvNo = bkashTokenModel?.marchantInvNo else {
+            self.paymentCancellation(message: "Payment cancelled!, please try again later")
             return nil
         }
         
         let jsonObject = ["authToken": token,
-                          "rechargeAmount": amount,
+                          "rechargeAmount": paymentHelper.balanceAmount,
                           "Name": "sale",
                           "currency": currency,
                           "mrcntNumber": marchantInvNo] as [String : Any]
         let jsonArray = [jsonObject]
         
         guard let jsonData = try? JSONSerialization.data(withJSONObject: jsonArray, options: []) else {
-            print("Problem in parameter creation...")
+            self.paymentCancellation(message: "Payment cancelled!, please try again later")
             return nil
         }
         
         guard let urlComponents = URLComponents(string: NetworkApiService.webBaseUrl+"/api/ispportal/createbkashpayment") else {
-            print("Problem in UrlComponent creation...")
+            self.paymentCancellation(message: "Payment cancelled!, please try again later")
             return nil
         }
         
         guard let url = urlComponents.url else {
+            self.paymentCancellation(message: "Payment cancelled!, please try again later")
             return nil
         }
         
@@ -268,18 +281,17 @@ class BillingViewModel: ObservableObject {
                         break
                     case .failure(let error):
                         print(error.localizedDescription)
+                        self.paymentCancellation(message: "Payment cancelled!, please try again later")
                 }
             }, receiveValue: { response in
                 guard let resExecuteBk = response.resdata?.resExecuteBk else {
-                    self.errorToastPublisher.send((true, "Can not execute payment, please try again!"))
+                    self.paymentCancellation(message: "Payment cancelled!, please try again later")
                     return
                 }
                 if !resExecuteBk.isEmpty {
                     self.saveBkashPayment(bkashPaymentResponse: resExecuteBk)
                 } else {
-                    self.errorToastPublisher.send((true, "Can not execute payment, please try again!"))
-                    self.showBkashWebViewPublisher.send(false)
-                    self.showLoader.send(false)
+                    self.paymentCancellation(message: "Payment cancelled!, please try again later")
                 }
             })
     }
@@ -287,16 +299,12 @@ class BillingViewModel: ObservableObject {
     func executeBkashPaymentApiCall() -> AnyPublisher<BKashExecutePaymentResponse, Error>? {
         
         guard let data = bkashTokenModel?.token?.data(using: .utf8) else {
-            self.errorToastPublisher.send((true, "Can not create payment, please try again!"))
+            self.paymentCancellation(message: "Payment cancelled!, please try again later")
             return nil
         }
         
-        guard let tokenJson = try? JSONSerialization.jsonObject(with: data, options: .allowFragments) as? [String: Any] else {
-            self.errorToastPublisher.send((true, "Can not create payment, please try again!"))
-            return nil
-        }
-        
-        guard let token = tokenJson["id_token"], let paymentID = bkashPaymentExecuteJson["paymentID"] else {
+        guard let tokenJson = try? JSONSerialization.jsonObject(with: data, options: .allowFragments) as? [String: Any], let token = tokenJson["id_token"], let paymentID = bkashPaymentExecuteJson["paymentID"] else {
+            self.paymentCancellation(message: "Payment cancelled!, please try again later")
             return nil
         }
         
@@ -305,16 +313,17 @@ class BillingViewModel: ObservableObject {
         let jsonArray = [jsonObject]
         
         guard let jsonData = try? JSONSerialization.data(withJSONObject: jsonArray, options: []) else {
-            print("Problem in parameter creation...")
+            self.paymentCancellation(message: "Payment cancelled!, please try again later")
             return nil
         }
         
         guard let urlComponents = URLComponents(string: NetworkApiService.webBaseUrl+"/api/ispportal/executebkashpayment") else {
-            print("Problem in UrlComponent creation...")
+            self.paymentCancellation(message: "Payment cancelled!, please try again later")
             return nil
         }
         
         guard let url = urlComponents.url else {
+            self.paymentCancellation(message: "Payment cancelled!, please try again later")
             return nil
         }
         
@@ -361,10 +370,11 @@ class BillingViewModel: ObservableObject {
                         break
                     case .failure(let error):
                         print(error.localizedDescription)
+                        self.paymentCancellation(message: "Payment cancelled!, please contact with support team")
                 }
             }, receiveValue: { response in
-                guard let resstate = response.resdata.resstate, let message = response.resdata.message else {
-                    self.bkashPaymentStatusPublisher.send((false, "Can not save payment, please contact with support team!"))
+                guard let resstate = response.resdata?.resstate, let message = response.resdata?.message else {
+                    self.bkashPaymentStatusPublisher.send((false, "Payment not successful, please contact with support team"))
                     return
                 }
                 self.bkashPaymentStatusPublisher.send((resstate, message))
@@ -374,7 +384,8 @@ class BillingViewModel: ObservableObject {
     
     func saveBkashPaymentApiCall(bkashPaymentModel: String) -> AnyPublisher<DefaultResponse, Error>? {
         let bkashData = Data(bkashPaymentModel.utf8)
-        guard let bkashJson = try? JSONSerialization.jsonObject(with: bkashData, options: .allowFragments) as? [String: Any] else {
+        guard let paymentHelper = billPaymentHelper, let bkashJson = try? JSONSerialization.jsonObject(with: bkashData, options: .allowFragments) as? [String: Any] else {
+            self.bkashPaymentStatusPublisher.send((false, "Payment not successful!, please contact with support team"))
             return nil
         }
         
@@ -385,10 +396,10 @@ class BillingViewModel: ObservableObject {
         
         let user = UserLocalStorage.getLoggedUserData()
         let loggedUser = UserLocalStorage.getUserCredentials().loggedUser
-        guard let userId = user?.userID, let packServiceId = payingUserPackServiceId,
+        guard let userId = user?.userID,
             let profileId = user?.profileID, let userTypeId = loggedUser?.userTypeId,
-            let trxId = bkashJson["trxID"], let userName = user?.displayName,
-            let amount = bkashJson["amount"] else {
+            let trxId = bkashJson["trxID"], let userName = user?.displayName else {
+                self.bkashPaymentStatusPublisher.send((false, "Payment not successful!, please contact with support team"))
                 return nil
         }
         
@@ -396,32 +407,34 @@ class BillingViewModel: ObservableObject {
         let format = DateFormatter()
         format.dateFormat = "yyyy-MM-dd HH:mm:ss"
         let today = format.string(from: date)
-        let jsonObject = ["ISPUserID": userId,
-                          "UserPackServiceId": packServiceId,
-                          "ProfileId": profileId,
-                          "UserTypeId": userTypeId,
-                          "TransactionNo": trxId,
-                          "InvoiceId": payingInvoiceId ?? 0,
-                          "UserName": userName,
-                          "TransactionDate": today,
-                          "RechargeType": "bkash",
-                          "BalanceAmount": amount,
+        let jsonObject = ["BalanceAmount": paymentHelper.balanceAmount,
+                          "DeductedAmount": paymentHelper.deductedAmount,
+                          "ISPUserID": userId,
+                          "InvoiceId": paymentHelper.invoiceId,
+                          "IsActive": true,
                           "Particulars": "",
-                          "IsActive": true] as [String : Any]
+                          "ProfileId": profileId,
+                          "RechargeType": "bkash",
+                          "TransactionDate": today,
+                          "TransactionNo": trxId,
+                          "UserName": userName,
+                          "UserPackServiceId": paymentHelper.userPackServiceId,
+                          "UserTypeId": userTypeId] as [String : Any]
         
         let jsonArray = [jsonObject, bkashJson]
         
         guard let jsonData = try? JSONSerialization.data(withJSONObject: jsonArray, options: []) else {
-            print("Problem in parameter creation...")
+            self.bkashPaymentStatusPublisher.send((false, "Payment not successful!, please contact with support team"))
             return nil
         }
         
         guard let urlComponents = URLComponents(string: NetworkApiService.webBaseUrl+"/api/ispportal/newrechargebkashpayment") else {
-            print("Problem in UrlComponent creation...")
+            self.bkashPaymentStatusPublisher.send((false, "Payment not successful!, please contact with support team"))
             return nil
         }
         
         guard let url = urlComponents.url else {
+            self.bkashPaymentStatusPublisher.send((false, "Payment not successful!, please contact with support team"))
             return nil
         }
         
@@ -469,6 +482,7 @@ class BillingViewModel: ObservableObject {
                     case .failure(let error):
                         self.errorToastPublisher.send((true, error.localizedDescription))
                         print(error.localizedDescription)
+                        self.errorToastPublisher.send((true, "Payment cancelled!, please try again later"))
                 }
             }, receiveValue: { response in
                 guard let processUrl = response.resdata.paymentProcessUrl, let statusUrl = response.resdata.paymentStatusUrl else {
@@ -482,26 +496,22 @@ class BillingViewModel: ObservableObject {
     }
     
     func executeGetFosterUrlApiCall() -> AnyPublisher<FosterResponse, Error>? {
-        let user = UserLocalStorage.getLoggedUserData()
-        guard let userId = user?.userID, let amount = paymentAmount else {
-            self.errorToastPublisher.send((true, "Payment can not be done at this moment, Please try again later!"))
+        
+        guard let paymentHelper = billPaymentHelper, let userId = UserLocalStorage.getLoggedUserData()?.userID else {
+            self.errorToastPublisher.send((true, "Payment cancelled!, please try again later"))
             return nil
         }
-        let jsonObject = ["UserID": userId, "rechargeAmount": amount, "IsActive": true ] as [String : Any]
+        
+        let jsonObject = ["UserID": userId, "rechargeAmount": paymentHelper.balanceAmount, "IsActive": true ] as [String : Any]
         let jsonArray = [jsonObject]
         
         guard let jsonData = try? JSONSerialization.data(withJSONObject: jsonArray, options: []) else {
-            self.errorToastPublisher.send((true, "Payment can not be done at this moment, Please try again later!"))
+            self.errorToastPublisher.send((true, "Payment cancelled!, please try again later"))
             return nil
         }
         
-        guard let urlComponents = URLComponents(string: NetworkApiService.webBaseUrl+"/api/ispportal/isprecharge") else {
-            self.errorToastPublisher.send((true, "Payment can not be done at this moment, Please try again later!"))
-            return nil
-        }
-        
-        guard let url = urlComponents.url else {
-            self.errorToastPublisher.send((true, "Payment can not be done at this moment, Please try again later!"))
+        guard let urlComponents = URLComponents(string: NetworkApiService.webBaseUrl+"/api/ispportal/isprecharge"), let url = urlComponents.url else {
+            self.errorToastPublisher.send((true, "Payment cancelled!, please try again later"))
             return nil
         }
         
@@ -538,6 +548,11 @@ class BillingViewModel: ObservableObject {
         .eraseToAnyPublisher()
     }
     
+    func cancelFosterPayment(message: String) {
+        self.showFosterWebViewPublisher.send(false)
+        self.errorToastPublisher.send((true, message))
+    }
+    
     // MARK: - checkFosterStatus()
     // Checks that the foster payment has done successfully or not
     func checkFosterStatus() {
@@ -552,8 +567,7 @@ class BillingViewModel: ObservableObject {
                 }
             }, receiveValue: { response in
                 guard let fosterRes = response.resdata.fosterRes else {
-                    self.showFosterWebViewPublisher.send(false)
-                    self.errorToastPublisher.send((true, "Payment can not be done at this moment, Please try again later!"))
+                    self.cancelFosterPayment(message: "Payment cancelled!, please try again later")
                     return
                 }
                 self.saveFosterRecharge(fosterModel: fosterRes)
@@ -562,28 +576,19 @@ class BillingViewModel: ObservableObject {
     
     func executeFosterStatusApiCall() -> AnyPublisher<FosterStatusCheckModel, Error>? {
         guard let statusUrl = fosterStatusUrl else {
-            self.showFosterWebViewPublisher.send(true)
-            self.errorToastPublisher.send((true, "Payment can not be done at this moment, Please try again later!"))
+            self.cancelFosterPayment(message: "Payment cancelled!, please try again later")
             return nil
         }
         let jsonObject = ["statusCheckUrl": statusUrl]
         let jsonArray = [jsonObject]
         
         guard let jsonData = try? JSONSerialization.data(withJSONObject: jsonArray, options: []) else {
-            self.showFosterWebViewPublisher.send(true)
-            self.errorToastPublisher.send((true, "Payment can not be done at this moment, Please try again later!"))
+            self.cancelFosterPayment(message: "Payment cancelled!, please try again later")
             return nil
         }
         
-        guard let urlComponents = URLComponents(string: NetworkApiService.webBaseUrl+"/api/ispportal/isprechargesave") else {
-            self.showFosterWebViewPublisher.send(true)
-            self.errorToastPublisher.send((true, "Payment can not be done at this moment, Please try again later!"))
-            return nil
-        }
-        
-        guard let url = urlComponents.url else {
-            self.showFosterWebViewPublisher.send(true)
-            self.errorToastPublisher.send((true, "Payment can not be done at this moment, Please try again later!"))
+        guard let urlComponents = URLComponents(string: NetworkApiService.webBaseUrl+"/api/ispportal/isprechargesave"), let url = urlComponents.url else {
+            self.cancelFosterPayment(message: "Payment cancelled!, please try again later")
             return nil
         }
         
@@ -631,45 +636,42 @@ class BillingViewModel: ObservableObject {
                     case .failure(let error):
                         self.errorToastPublisher.send((true, error.localizedDescription))
                         print(error.localizedDescription)
+                        self.cancelFosterPayment(message: "Payment not successful!, Please contact with support team")
                 }
             }, receiveValue: { response in
-                guard let resstate = response.resdata.resstate else {
-                    self.showFosterWebViewPublisher.send(false)
-                    self.errorToastPublisher.send((true, "Payment not success, Please contact with support team!"))
+                guard let resstate = response.resdata?.resstate else {
+                    self.cancelFosterPayment(message: "Payment not successful!, Please contact with support team")
                     return
                 }
                 if resstate == true {
-                    self.successToastPublisher.send((true, response.resdata.message ?? "Payment successful"))
+                    self.successToastPublisher.send((true, response.resdata?.message ?? "Payment successful"))
+                    self.showFosterWebViewPublisher.send(false)
                     self.refreshUI()
                 } else {
-                    self.errorToastPublisher.send((true, response.resdata.message ?? "Payment not success, Please contact with support team!"))
+                    self.cancelFosterPayment(message: response.resdata?.message ?? "Payment not success, Please contact with support team!")
                 }
-                self.showFosterWebViewPublisher.send(false)
             })
     }
     
     func executeFosterRechargeSaveApiCall(fosterModel: String) -> AnyPublisher<DefaultResponse, Error>? {
         
         let fosterData = Data(fosterModel.utf8)
-        guard let fosterResponseModelArray = try? JSONDecoder().decode([FosterModel].self, from: fosterData) else {
-            self.showFosterWebViewPublisher.send(false)
-            self.errorToastPublisher.send((true, "Payment not success, Please contact with support team!"))
+        guard let fosterResponseModelArray = try? JSONDecoder().decode([FosterModel].self, from: fosterData), let paymentHelper = billPaymentHelper else {
+            self.cancelFosterPayment(message: "Payment not successful!, Please contact with support team")
             return nil
         }
         guard fosterResponseModelArray.count > 0 else {
-            self.showFosterWebViewPublisher.send(false)
-            self.errorToastPublisher.send((true, "Payment not success, Please contact with support team!"))
+            self.cancelFosterPayment(message: "Payment not successful!, Please contact with support team")
             return nil
         }
         let fosterResponseModel = fosterResponseModelArray[0]
         let user = UserLocalStorage.getLoggedUserData()
         let loggedUser = UserLocalStorage.getUserCredentials().loggedUser
         
-        guard let userId = user?.userID, let profileId = user?.profileID, let packServiceId = payingUserPackServiceId,
+        guard let userId = user?.userID, let profileId = user?.profileID,
             let userTypeId = loggedUser?.userTypeId, let merchantTxnNo = fosterResponseModel.MerchantTxnNo,
-            let userName = user?.displayName, let amount = fosterResponseModel.TxnAmount else {
-                self.showFosterWebViewPublisher.send(true)
-                self.errorToastPublisher.send((true, "Payment not success, Please contact with support team!"))
+            let userName = user?.displayName else {
+                self.cancelFosterPayment(message: "Payment not successful!, Please contact with support team")
                 return nil
         }
         
@@ -677,22 +679,22 @@ class BillingViewModel: ObservableObject {
         let format = DateFormatter()
         format.dateFormat = "yyyy-MM-dd HH:mm:ss"
         let today = format.string(from: date)
-        let jsonObject = ["ISPUserID": userId,
-                          "UserPackServiceId": packServiceId,
-                          "ProfileId": profileId,
-                          "UserTypeId": userTypeId,
-                          "TransactionNo": merchantTxnNo,
-                          "InvoiceId": payingInvoiceId ?? 0,
-                          "UserName": userName,
-                          "TransactionDate": today,
-                          "RechargeType": "foster",
-                          "BalanceAmount": amount,
+        let jsonObject = ["BalanceAmount": paymentHelper.balanceAmount,
+                          "DeductedAmount": paymentHelper.deductedAmount,
+                          "ISPUserID": userId,
+                          "InvoiceId": paymentHelper.invoiceId,
+                          "IsActive": true,
                           "Particulars": "",
-                          "IsActive": true] as [String : Any]
+                          "ProfileId": profileId,
+                          "RechargeType": "foster",
+                          "TransactionDate": today,
+                          "TransactionNo": merchantTxnNo,
+                          "UserName": userName,
+                          "UserPackServiceId": paymentHelper.userPackServiceId,
+                          "UserTypeId": userTypeId] as [String : Any]
         
         guard let fosterJsonData = try? JSONEncoder().encode(fosterResponseModel) else {
-            self.showFosterWebViewPublisher.send(false)
-            self.errorToastPublisher.send((true, "Payment not success, Please contact with support team!"))
+            self.cancelFosterPayment(message: "Payment not successful!, Please contact with support team")
             return nil
         }
         let fosterJsonObject = try? JSONSerialization.jsonObject(with: fosterJsonData, options: .allowFragments) as? [String: Any?]
@@ -700,20 +702,12 @@ class BillingViewModel: ObservableObject {
         let jsonArray = [jsonObject, fosterJsonObject]
         
         guard let jsonData = try? JSONSerialization.data(withJSONObject: jsonArray, options: []) else {
-            self.showFosterWebViewPublisher.send(false)
-            self.errorToastPublisher.send((true, "Payment not success, Please contact with support team!"))
+            self.cancelFosterPayment(message: "Payment not successful!, Please contact with support team")
             return nil
         }
         
-        guard let urlComponents = URLComponents(string: NetworkApiService.webBaseUrl + "/api/ispportal/newrechargesave") else {
-            self.showFosterWebViewPublisher.send(false)
-            self.errorToastPublisher.send((true, "Payment not success, Please contact with support team!"))
-            return nil
-        }
-        
-        guard let url = urlComponents.url else {
-            self.showFosterWebViewPublisher.send(false)
-            self.errorToastPublisher.send((true, "Payment not success, Please contact with support team!"))
+        guard let urlComponents = URLComponents(string: NetworkApiService.webBaseUrl + "/api/ispportal/newrechargesave"), let url = urlComponents.url else {
+            self.cancelFosterPayment(message: "Payment not successful!, Please contact with support team")
             return nil
         }
         
@@ -1153,6 +1147,113 @@ class BillingViewModel: ObservableObject {
         }
         .retry(1)
         .decode(type: [UserPackServiceList].self, decoder: JSONDecoder())
+        .receive(on: RunLoop.main)
+        .eraseToAnyPublisher()
+    }
+    
+    // MARK: - payFromBalance()
+    // Saves the successful payment from balance
+    func payFromBalance() {
+        self.payFromBalanceSubscriber = self.payFromBalanceApiCall()?
+            .sink(receiveCompletion: { completion in
+                switch completion {
+                    case .finished:
+                        break
+                    case .failure(let error):
+                        print(error.localizedDescription)
+                        self.errorToastPublisher.send((true, "Payment not successful!, please try again later"))
+                }
+            }, receiveValue: { response in
+                guard let resstate = response.resdata?.resstate, let message = response.resdata?.message else {
+                    self.errorToastPublisher.send((true, "Payment not successful, please try again later!"))
+                    return
+                }
+                if resstate {
+                    self.successToastPublisher.send((true, message))
+                } else {
+                    self.errorToastPublisher.send((true, message))
+                }
+                self.refreshUI()
+            })
+    }
+    
+    func payFromBalanceApiCall() -> AnyPublisher<DefaultResponse, Error>? {
+        
+        guard let paymentHelper = billPaymentHelper else {
+            self.errorToastPublisher.send((true, "Payment cancelled!, please try again later"))
+            return nil
+        }
+        
+        let user = UserLocalStorage.getLoggedUserData()
+        let loggedUser = UserLocalStorage.getUserCredentials().loggedUser
+        guard let userId = user?.userID, let profileId = user?.profileID,
+            let userTypeId = loggedUser?.userTypeId, let userName = user?.displayName else {
+                self.errorToastPublisher.send((true, "Payment cancelled!, please try again later"))
+                return nil
+        }
+        
+        let date = Date()
+        let format = DateFormatter()
+        format.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        let today = format.string(from: date)
+        let jsonObject = ["ispUserID": userId,
+                          "userPackServiceId": paymentHelper.userPackServiceId,
+                          "profileId": profileId,
+                          "userTypeId": userTypeId,
+                          "invoiceId": paymentHelper.invoiceId,
+                          "username": userName,
+                          "transactionDate": today,
+                          "rechargeType": "From Balance",
+                          "balanceAmount": paymentHelper.balanceAmount,
+                          "particulars": "Payment by user existing balance",
+                          "isActive": true] as [String : Any]
+        
+        let jsonArray = [jsonObject]
+        
+        guard let jsonData = try? JSONSerialization.data(withJSONObject: jsonArray, options: []) else {
+            self.errorToastPublisher.send((true, "Payment cancelled!, please try again later"))
+            return nil
+        }
+        
+        guard let urlComponents = URLComponents(string: NetworkApiService.webBaseUrl+"/api/ispportal/newpayment") else {
+            self.errorToastPublisher.send((true, "Payment cancelled!, please try again later"))
+            return nil
+        }
+        
+        guard let url = urlComponents.url else {
+            self.errorToastPublisher.send((true, "Payment cancelled!, please try again later"))
+            return nil
+        }
+        
+        //Request type
+        var request = getCommonUrlRequest(url: url)
+        request.httpMethod = "POST"
+        
+        //Setting headers
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        //Setting body for POST request
+        request.httpBody = jsonData
+        
+        return URLSession.shared.dataTaskPublisher(for: request)
+            .handleEvents(receiveSubscription: { _ in
+                self.showLoader.send(true)
+            }, receiveOutput: { _ in
+                self.showLoader.send(false)
+            }, receiveCompletion: { _ in
+                self.showLoader.send(false)
+            }, receiveCancel: {
+                self.showLoader.send(false)
+            })
+            .tryMap { data, response -> Data in
+                guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+                    throw NetworkApiService.APIFailureCondition.InvalidServerResponse
+                }
+                
+                return data
+        }
+        .retry(1)
+        .decode(type: DefaultResponse.self, decoder: JSONDecoder())
         .receive(on: RunLoop.main)
         .eraseToAnyPublisher()
     }

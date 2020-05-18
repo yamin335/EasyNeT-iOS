@@ -83,6 +83,7 @@ struct InvoiceView: View {
             self.viewModel.invoicePageNumber = -1
             self.viewModel.invoiceList.removeAll()
             self.viewModel.getUserInvoiceList()
+            self.viewModel.getUserBalance()
         }
     }
 }

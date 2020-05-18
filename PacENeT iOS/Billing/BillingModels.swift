@@ -176,10 +176,24 @@ struct UserBalanceResdata: Codable {
 
 // MARK: - UserBalance
 struct UserBalance: Codable {
-    let ispuserId, balanceAmount: Int?
+    let ispuserId, balanceAmount: Double?
     let duesAmount: Double?
     let isActive: Bool?
     let companyId: Int?
     let createDate: String?
     let createdBy: Int?
+}
+
+// MARK: - BillPaymentHelper
+struct BillPaymentHelper {
+    let balanceAmount: Double
+    let deductedAmount: Double
+    let invoiceId : Int
+    let userPackServiceId : Int
+}
+
+// MARK: - FosterHelper
+struct FosterHelper {
+    let fosterProcessUrl: String
+    let fosterStatusUrl: String
 }

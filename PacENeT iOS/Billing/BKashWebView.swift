@@ -44,18 +44,14 @@ struct BKashWebView: UIViewRepresentable, BkashWebViewHandlerDelegate {
     }
     
     func finishPayment() {
-        viewModel.payingInvoiceId = nil
-        viewModel.payingUserPackServiceId = nil
+        viewModel.billPaymentHelper = nil
         viewModel.bkashTokenModel = nil
-        viewModel.paymentAmount = nil
         viewModel.showBkashWebViewPublisher.send(false)
         viewModel.showLoader.send(false)
     }
     
     func cancelPayment() {
-        viewModel.payingInvoiceId = nil
-        viewModel.payingUserPackServiceId = nil
-        viewModel.paymentAmount = nil
+        viewModel.billPaymentHelper = nil
         viewModel.showBkashWebViewPublisher.send(false)
         viewModel.showLoader.send(false)
     }
@@ -171,7 +167,7 @@ struct BKashWebView: UIViewRepresentable, BkashWebViewHandlerDelegate {
                 
             })
             
-            guard let amount = parent.viewModel.paymentAmount else {
+            guard let amount = parent.viewModel.billPaymentHelper?.balanceAmount else {
                 self.parent.viewModel.errorToastPublisher.send((true, "Invalid payment amount!"))
                 self.delegate?.cancelPayment()
                 return

@@ -19,6 +19,7 @@ struct ContactView: View {
     @State var phone1 = "+88-01777706745"
     @State var phone2 = "+88-01777706746"
     @State var mail = "support@royalgreen.net"
+    @State var web = "https://pacenet.net/"
     
     var headerView: some View {
         VStack {
@@ -38,11 +39,7 @@ struct ContactView: View {
             Button(action: {
                 guard let url = URL(string: "tel://\(self.tel)"),
                     UIApplication.shared.canOpenURL(url) else { return }
-                if #available(iOS 10, *) {
-                    UIApplication.shared.open(url)
-                } else {
-                    UIApplication.shared.openURL(url)
-                }
+                UIApplication.shared.open(url)
             }) {
                 HStack {
                     Image(systemName: "phone.fill")
@@ -69,11 +66,7 @@ struct ContactView: View {
             Button(action: {
                 guard let url = URL(string: "tel://\(self.phone1)"),
                     UIApplication.shared.canOpenURL(url) else { return }
-                if #available(iOS 10, *) {
-                    UIApplication.shared.open(url)
-                } else {
-                    UIApplication.shared.openURL(url)
-                }
+                UIApplication.shared.open(url)
             }) {
                 HStack {
                     Image(systemName: "phone.fill")
@@ -111,11 +104,7 @@ struct ContactView: View {
             Button(action: {
                 guard let url = URL(string: "tel://\(self.phone2)"),
                     UIApplication.shared.canOpenURL(url) else { return }
-                if #available(iOS 10, *) {
-                    UIApplication.shared.open(url)
-                } else {
-                    UIApplication.shared.openURL(url)
-                }
+                UIApplication.shared.open(url)
             }) {
                 HStack {
                     Image(systemName: "phone.fill")
@@ -175,13 +164,9 @@ struct ContactView: View {
     var webView: some View {
         HStack {
             Button(action: {
-                guard let webURL = URL(string: "https://www.royalgreen.net"), UIApplication.shared.canOpenURL(webURL) else {return}
+                guard let webURL = URL(string: self.web), UIApplication.shared.canOpenURL(webURL) else {return}
                 //redirect to safari
-                if #available(iOS 10.0, *) {
-                    UIApplication.shared.open(webURL as URL, options: [:], completionHandler: nil)
-                } else {
-                    UIApplication.shared.openURL(webURL as URL)
-                }
+                UIApplication.shared.open(webURL as URL, options: [:], completionHandler: nil)
             }) {
                 HStack {
                     Image(systemName: "globe")
@@ -189,7 +174,7 @@ struct ContactView: View {
                         .foregroundColor(Colors.color4)
                     
                     VStack(alignment: .leading) {
-                        Text("www.royalgreen.net")
+                        Text("www.pacenet.net")
                             .font(.callout)
                             .foregroundColor(Colors.color2)
                         Text("Web")
@@ -266,7 +251,7 @@ struct ContactView: View {
         .sheet(isPresented: $showMailView) {
             MailView(result: self.$result, recipients: [self.mail])
         }
-        .navigationBarTitle(Text("Contact"))
+        .navigationBarTitle(Text("Contact Us"))
     }
     
     func mailComposeController(controller: MFMailComposeViewController,

@@ -71,39 +71,39 @@ struct LoginScreen: View {
             ZStack {
                 VStack(alignment: .center) {
                     contentView
-                    Button(action: {
-                        //
-                    }) {
-                        Text("Forgot Password?")
-                            .foregroundColor(Colors.greenTheme)
-                            .padding(.top, 2)
-                    }
-                    
-                    HStack(alignment: .center){
-                        Text("Don't have an account yet?")
-                            .foregroundColor(.gray).font(.subheadline)
-                        
-                        Button(action: {
-                            withAnimation() {
+//                    Button(action: {
+//                        
+//                    }) {
+//                        Text("Forgot Password?")
+//                            .foregroundColor(Colors.greenTheme)
+//                            .padding(.top, 2)
+//                    }
+//                    
+//                    HStack(alignment: .center){
+//                        Text("Don't have an account yet?")
+//                            .foregroundColor(.gray).font(.subheadline)
+//                        
+//                        Button(action: {
+//                            withAnimation() {
 //                                self.loginViewModel.showSignupModal = true
-                            }
-                        }) {
-                            Text("Sign Up")
-                                .foregroundColor(Colors.greenTheme)
-                        }
-                    }
-                    .padding(.top, 1)
+//                            }
+//                        }) {
+//                            Text("Sign Up")
+//                                .foregroundColor(Colors.greenTheme)
+//                        }
+//                    }
+//                    .padding(.top, 1)
                     Spacer()
                     HStack(alignment: .center){
                         
-                        NavigationLink(destination: FaqsView()) {
-                            Text("FAQs")
-                                .foregroundColor(Colors.greenTheme)
-                                .font(.subheadline)
-                        }
-                        
-                        Divider().frame(width: 1, height: 14, alignment: .center)
-                            .background(Colors.greenTheme)
+//                        NavigationLink(destination: FaqsView()) {
+//                            Text("FAQs")
+//                                .foregroundColor(Colors.greenTheme)
+//                                .font(.subheadline)
+//                        }
+//
+//                        Divider().frame(width: 1, height: 14, alignment: .center)
+//                            .background(Colors.greenTheme)
                         
                         NavigationLink(destination: PrivacyView()) {
                             Text("Privacy")
@@ -123,9 +123,10 @@ struct LoginScreen: View {
                     .padding(.top, 1)
                     .padding(.bottom, 16)
                     
-                    Text("All rights reserved. Copyright ©2019, Royal Green Ltd.")
+                    Text("All Rights Reserved. Copyright ©2020, Royal Green Ltd.")
                         .font(.footnote)
                         .foregroundColor(.gray)
+                        .multilineTextAlignment(.center)
                         .padding(.bottom, 8)
                     
                 }
@@ -182,7 +183,7 @@ struct LoginScreen: View {
                     self.showErrorToast = showToast
                 }
             }
-        }
+        }.navigationViewStyle(StackNavigationViewStyle())
     }
 }
 

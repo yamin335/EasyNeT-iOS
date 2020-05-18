@@ -15,7 +15,6 @@ struct Profile: View {
     @ObservedObject var viewModel = ProfileViewModel()
     @State private var showSignoutAlert = false
     @State private var name = ""
-    @State private var balance = ""
     @State private var createDate = ""
     @State private var package = ""
     @State private var packageCharge = ""
@@ -24,6 +23,14 @@ struct Profile: View {
     @State private var userPackServices = [UserPackService]()
     @State var changingUserPackService: UserPackService?
     @State private var showLoader = false
+    
+    // Toasts
+    @State var showSuccessToast = false
+    @State var successMessage: String = ""
+    @State var showWarningToast = false
+    @State var warningMessage: String = ""
+    @State var showErrorToast = false
+    @State var errorMessage: String = ""
     
     var signoutButton: some View {
         Button(action: {
@@ -81,7 +88,21 @@ struct Profile: View {
                 .font(.system(size: 15))
                 .font(.title)
                 .foregroundColor(Color.gray)
-            Text(balance + " BDT")
+            Text(viewModel.balance)
+                .font(.system(size: 14))
+                .font(.body)
+                .foregroundColor(Color.gray)
+        }
+    }
+    
+    var dueView: some View {
+        VStack(alignment: .leading) {
+            Text("Due")
+                .bold()
+                .font(.system(size: 15))
+                .font(.title)
+                .foregroundColor(Color.gray)
+            Text(viewModel.due)
                 .font(.system(size: 14))
                 .font(.body)
                 .foregroundColor(Color.gray)
@@ -149,11 +170,9 @@ struct Profile: View {
         NavigationView {
             ZStack {
                 VStack(alignment: .leading, spacing: 0) {
-                    profileHeader
-                    Text("Personal Information")
+                    Text(name)
                         .font(.system(size: 17))
                         .fontWeight(.heavy)
-                        .underline(true, color: .gray)
                         .padding(.top, 8)
                         .padding(.bottom, 6)
                         .padding(.leading, 16)
@@ -161,6 +180,7 @@ struct Profile: View {
                         .foregroundColor(.gray)
                     
                     balanceView.padding(.leading, 16).padding(.trailing, 16).padding(.top, 5)
+                    dueView.padding(.leading, 16).padding(.trailing, 16).padding(.top, 8)
                     createView.padding(.leading, 16).padding(.trailing, 16).padding(.top, 8)
                     emailView.padding(.leading, 16).padding(.trailing, 16).padding(.top, 8)
                     phoneView.padding(.leading, 16).padding(.trailing, 16).padding(.top, 8)
@@ -186,6 +206,18 @@ struct Profile: View {
                     .onReceive(self.viewModel.showLoader.receive(on: RunLoop.main)) { shouldShow in
                         self.showLoader = shouldShow
                     }
+                    .onReceive(self.viewModel.warningToastPublisher.receive(on: RunLoop.main)) { (shouldShow, message) in
+                        self.showWarningToast = shouldShow
+                        self.warningMessage = message
+                    }
+                    .onReceive(self.viewModel.errorToastPublisher.receive(on: RunLoop.main)) { (shouldShow, message) in
+                        self.showErrorToast = shouldShow
+                        self.errorMessage = message
+                    }
+                    .onReceive(self.viewModel.successToastPublisher.receive(on: RunLoop.main)) { (shouldShow, message) in
+                        self.showSuccessToast = shouldShow
+                        self.successMessage = message
+                    }
                     .onReceive(self.viewModel.$userPackServices.receive(on: RunLoop.main)) {
                             userPackServices in
                         withAnimation {
@@ -201,14 +233,57 @@ struct Profile: View {
                     self.viewModel.getUserPackServiceData()
                     self.viewModel.getPackServiceData()
                 }
-                .background(Color.white).navigationBarTitle(Text("Profile"), displayMode: .inline)
+                .background(Color.white).navigationBarTitle(Text("Profile"))
                     .navigationBarItems(leading: refreshButton)
                 
+                if self.showSuccessToast {
+                    VStack {
+                        Spacer()
+                        SuccessToast(message: self.successMessage).onAppear {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                                withAnimation() {
+                                    self.showSuccessToast = false
+                                    self.successMessage = ""
+                                }
+                            }
+                        }.padding(.all, 20)
+                    }.zIndex(3)
+                }
+
+                if self.showErrorToast {
+                    VStack {
+                        Spacer()
+                        ErrorToast(message: self.errorMessage).onAppear {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                                withAnimation() {
+                                    self.showErrorToast = false
+                                    self.errorMessage = ""
+                                }
+                            }
+                        }.padding(.all, 20)
+                    }.zIndex(3)
+                }
+                
+                if self.showWarningToast {
+                    VStack {
+                        Spacer()
+                        WarningToast(message: self.warningMessage).onAppear {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                                withAnimation() {
+                                    self.showWarningToast = false
+                                    self.warningMessage = ""
+                                }
+                            }
+                        }.padding(.all, 20)
+                    }.zIndex(3)
+                }
+                
                 if self.showLoader {
-                    SpinLoaderView()
+                    SpinLoaderView().zIndex(4)
                 }
             }
         }
+        .navigationViewStyle(StackNavigationViewStyle())
         .sheet(isPresented: $isPackageSheetPresented, onDismiss: {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 self.viewModel.getUserPackServiceData()
@@ -217,95 +292,22 @@ struct Profile: View {
             PackageChangeView(viewModel: self.viewModel, changingUserPackService: self.changingUserPackService!)
         })
         .onAppear() {
-            let months = [0 : "", 1 : "Jan", 2 : "Feb", 3 : "Mar", 4 : "Apr", 5 : "May", 6 : "Jun", 7 : "Jul", 8 : "Aug", 9 : "Sep", 10 : "Oct", 11 : "Nov", 12 : "Dec"]
-            let userInfo = UserLocalStorage.getLoggedUserData()
-            let nameData = userInfo?.displayName ?? ""
-            self.name = nameData.isEmpty ? "No Name Provided" : nameData
-            let date = userInfo?.created ?? ""
-            if date.contains("T") {
-                let splits = date.split(separator: "T")
-
-                let tempSplits = (splits.count > 1 ? splits[1] : "").split(separator: ".")[0].split(separator: ":")
-                let dateSplits = splits[0].split(separator: "-")
-                self.createDate = "Date: \(dateSplits[2])\(months[Int(dateSplits[1]) ?? 0] ?? ""), \(dateSplits[0]) & Time: \(tempSplits[0]):\(tempSplits[1])"
-            } else {
-                self.createDate = userInfo?.created ?? ""
-            }
-            
-            self.balance = String(userInfo?.balance ?? 0.0)
-            self.package = userInfo?.srvName ?? ""
-            self.packageCharge = String(userInfo?.unitPrice ?? 0.0)
-            let emailData = userInfo?.email ?? ""
-            self.email = emailData.isEmpty ? "N/A" : emailData
-            let phoneData = userInfo?.phone ?? ""
-            self.phone = phoneData.isEmpty ? "N/A" : phoneData
+            self.prepareProfileData()
+            self.viewModel.getUserBalance()
         }
     }
-}
-
-extension String {
-    func formatDate() -> String {
-        let months = [0 : "", 1 : "Jan", 2 : "Feb", 3 : "Mar", 4 : "Apr", 5 : "May", 6 : "Jun", 7 : "Jul", 8 : "Aug", 9 : "Sep", 10 : "Oct", 11 : "Nov", 12 : "Dec"]
-        if self.contains("T") {
-            let splits = self.split(separator: "T")
-
-            let tempSplits = (splits.count > 1 ? splits[0] : "").split(separator: "-")
-
-            return "\(tempSplits[2]) \(months[Int(tempSplits[1]) ?? 0] ?? ""), \(tempSplits[0])"
-        } else {
-            let tempSplits = self.split(separator: "-")
-
-            return "\(tempSplits[2]) \(months[Int(tempSplits[1]) ?? 0] ?? ""), \(tempSplits[0])"
-        }
-    }
-}
-
-extension String {
-    func formatTime() -> String {
-        if self.contains("T") {
-            let tempStringArray = self.split(separator: "T")
-            var tempString1 = tempStringArray[1]
-            var hour = 0
-            var minute = 0
-            //var seconds = 0
-            var amPm = ""
-            if (tempString1.contains(".")){
-                tempString1 = tempString1.split(separator: ".")[0]
-                hour = Int(tempString1.split(separator: ":")[0]) ?? 0
-                minute = Int(tempString1.split(separator: ":")[1]) ?? 0
-                //seconds = Int(tempString1.split(separator: ":")[2]) ?? 0
-                amPm = ""
-                if hour > 12 {
-                    hour -= 12
-                    amPm = "PM"
-                } else if hour == 0 {
-                    hour += 12
-                    amPm = "AM"
-                } else if hour == 12 {
-                    amPm = "PM"
-                } else {
-                    amPm = "AM"
-                }
-            } else {
-                hour = Int(tempString1.split(separator: ":")[0]) ?? 0
-                minute = Int(tempString1.split(separator: ":")[1]) ?? 0
-                //seconds = Int(tempString1.split(separator: ":")[2]) ?? 0
-                amPm = ""
-                if hour > 12 {
-                    hour -= 12
-                    amPm = "PM"
-                } else if hour == 0 {
-                    hour += 12
-                    amPm = "AM"
-                } else if hour == 12 {
-                    amPm = "PM"
-                } else {
-                    amPm = "AM"
-                }
-            }
-            return "\(hour):\(minute) \(amPm)"
-        }
-        return ""
+    
+    func prepareProfileData() {
+        let userInfo = UserLocalStorage.getLoggedUserData()
+        let nameData = userInfo?.displayName ?? ""
+        self.name = nameData.isEmpty ? "No Name Provided" : nameData
+        self.createDate = "Date & Time: \(userInfo?.created?.formatDate() ?? "")  \(userInfo?.created?.formatTime() ?? "")"
+        self.package = userInfo?.srvName ?? ""
+        self.packageCharge = String(userInfo?.unitPrice ?? 0.0)
+        let emailData = userInfo?.email ?? ""
+        self.email = emailData.isEmpty ? "N/A" : emailData
+        let phoneData = userInfo?.phone ?? ""
+        self.phone = phoneData.isEmpty ? "N/A" : phoneData
     }
 }
 

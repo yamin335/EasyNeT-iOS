@@ -15,10 +15,34 @@ class ProfileViewModel: ObservableObject {
     private var packServiceSubscriber: AnyCancellable? = nil
     private var userPackServiceSubscriber: AnyCancellable? = nil
     private var userPackServiceChangeSaveSubscriber: AnyCancellable? = nil
+    private var userBalanceSubscriber: AnyCancellable? = nil
+    private var packChangePayConsumeSubscriber: AnyCancellable? = nil
+    
+    var errorToastPublisher = PassthroughSubject<(Bool, String), Never>()
+    var successToastPublisher = PassthroughSubject<(Bool, String), Never>()
+    var warningToastPublisher = PassthroughSubject<(Bool, String), Never>()
+    
     var showLoader = PassthroughSubject<Bool, Never>()
     var objectHasChanged = PassthroughSubject<Bool, Never>()
     var showServiceChangeModal = PassthroughSubject<(Bool, UserPackService), Never>()
     var packServices = [PackService]()
+    var showPackageChangePayModalPublisher = PassthroughSubject<([PayMethod], PackageChangeConsumeData), Never>()
+    var packChangeHelper: PackageChangeHelper? = nil
+    var payMethods: [PayMethod] = []
+    var consumeData: PackageChangeConsumeData? = nil
+    
+    @Published var balance = ""
+    @Published var due = ""
+    
+    
+    @Published var userBalance: UserBalance? {
+        willSet {
+            self.balance = "\(newValue?.balanceAmount?.rounded(toPlaces: 2) ?? "0.0") BDT"
+            self.due = "\(newValue?.duesAmount?.rounded(toPlaces: 2) ?? "0.0") BDT"
+            objectHasChanged.send(true)
+        }
+    }
+    
     @Published var userPackServices = [UserPackService]() {
         didSet {
             objectHasChanged.send(true)
@@ -32,11 +56,87 @@ class ProfileViewModel: ObservableObject {
     }
     private var tempChoosingOptions = [ChildPackService]()
     
+    //MARK: - init()
+//    init() {
+//        getUserBalance()
+//    }
+    
     // MARK: - deinit()
     deinit {
         packServiceSubscriber?.cancel()
         userPackServiceSubscriber?.cancel()
         userPackServiceChangeSaveSubscriber?.cancel()
+        userBalanceSubscriber?.cancel()
+    }
+    
+    // MARK: - getUserBalance()
+    // Gets user's current account balance, dues etc.
+    func getUserBalance() {
+        self.userBalanceSubscriber = self.executeUserBalanceApiCall()?
+            .sink(receiveCompletion: { completion in
+                switch completion {
+                    case .finished:
+                        break
+                    case .failure(let error):
+                        print(error.localizedDescription)
+                }
+            }, receiveValue: { response in
+                if let userBalance = response.resdata?.billIspUserBalance {
+                    self.userBalance = userBalance
+                }
+            })
+    }
+    
+    func executeUserBalanceApiCall() -> AnyPublisher<UserBalanceResponse, Error>? {
+        let jsonObject = ["UserID": UserLocalStorage.getLoggedUserData()?.userID ?? 0]
+        let jsonArray = [jsonObject]
+
+        guard let jsonData = try? JSONSerialization.data(withJSONObject: jsonArray, options: []) else {
+            print("Problem in parameter creation...")
+            return nil
+        }
+       
+        guard let params = String(data: jsonData, encoding: String.Encoding.ascii) else {
+            print("Problem in parameter creation...")
+            return nil
+        }
+        var queryItems = [URLQueryItem]()
+        
+        queryItems.append(URLQueryItem(name: "param", value: params))
+        guard var urlComponents = URLComponents(string: NetworkApiService.webBaseUrl+"/api/ispportal/billispuserbalance") else {
+            print("Problem in UrlComponent creation...")
+            return nil
+        }
+        urlComponents.queryItems = queryItems
+        
+        guard let url = urlComponents.url else {
+            return nil
+        }
+        
+        var request = getCommonUrlRequest(url: url)
+        request.httpMethod = "GET"
+        
+        return URLSession.shared.dataTaskPublisher(for: request)
+            .handleEvents(receiveSubscription: { _ in
+                self.showLoader.send(true)
+            }, receiveOutput: { _ in
+                self.showLoader.send(false)
+            }, receiveCompletion: { _ in
+                self.showLoader.send(false)
+            }, receiveCancel: {
+                self.showLoader.send(false)
+            })
+            .tryMap { data, response -> Data in
+                guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+                    throw NetworkApiService.APIFailureCondition.InvalidServerResponse
+                }
+                
+                return data
+        }
+        .retry(1)
+        .decode(type: UserBalanceResponse.self, decoder: JSONDecoder())
+        .receive(on: RunLoop.main)
+        .eraseToAnyPublisher()
     }
     
     // MARK: - refactorPackageChangeSheetData()
@@ -178,25 +278,63 @@ class ProfileViewModel: ObservableObject {
                     case .finished:
                         break
                     case .failure(let error):
-                        //self.errorToastPublisher.send((true, error.localizedDescription))
                         print(error.localizedDescription)
+                        self.errorToastPublisher.send((true, "Not successful, contact with support! -- \(error.localizedDescription)"))
                 }
             }, receiveValue: { response in
-                if let resstate = response.resdata.resstate {
-                    if resstate == true {
+                if let resdata = response.resdata {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                         self.getUserPackServiceData()
                     }
+                    self.successToastPublisher.send((true, resdata.message ?? "Successfully changed!"))
+                    self.showLoader.send(true)
+                } else {
+                    self.errorToastPublisher.send((true, "Not successful, contact with support!"))
                 }
             })
     }
     
     func executeSavePackServiceApiCall(selectedPackService: ChildPackService, changingUserPackService: UserPackService) -> AnyPublisher<DefaultResponse, Error>? {
         
-        let newPackService: NewPackService = NewPackService(userPackServiceId: changingUserPackService.userPackServiceId, connectionNo: changingUserPackService.connectionNo, userId: changingUserPackService.userId, connectionTypeId: changingUserPackService.connectionTypeId, zoneId: changingUserPackService.zoneId, accountId: changingUserPackService.accountId, packServiceId: selectedPackService.packServiceId, packServiceName: selectedPackService.packServiceName, parentPackServiceId: selectedPackService.parentPackServiceId, parentPackServiceName: selectedPackService.parentPackServiceName, packServiceTypeId: selectedPackService.packServiceTypeId, packServiceType: selectedPackService.packServiceType, packServicePrice: selectedPackService.packServicePrice, packServiceInstallCharge: changingUserPackService.packServiceInstallCharge, packServiceOthersCharge: changingUserPackService.packServiceOthersCharge, payAmount: changingUserPackService.payAmount, saveAmount: changingUserPackService.saveAmount, methodId: changingUserPackService.methodId, isUpGrade: changingUserPackService.isUpGrade, isDownGrade: changingUserPackService.isDownGrade, isDefault: changingUserPackService.isDefault, expireDate: changingUserPackService.expireDate, activeDate: changingUserPackService.activeDate, isNew: changingUserPackService.isNew, isUpdate: true, isDelete: false, enabled: changingUserPackService.enabled, deductBalance: 0.0, isBalanceDeduct: true, isActive: changingUserPackService.isActive)
+        guard let helper = packChangeHelper else {
+            errorToastPublisher.send((true, "Not possible at this moment, please try again later!!"))
+            return nil
+        }
+        
+        let newPackService: NewPackService = NewPackService(userPackServiceId: changingUserPackService.userPackServiceId,
+                                                            connectionNo: changingUserPackService.connectionNo,
+                                                            userId: changingUserPackService.userId,
+                                                            connectionTypeId: changingUserPackService.connectionTypeId,
+                                                            zoneId: changingUserPackService.zoneId,
+                                                            accountId: changingUserPackService.accountId,
+                                                            packServiceId: selectedPackService.packServiceId,
+                                                            packServiceName: selectedPackService.packServiceName,
+                                                            parentPackServiceId: selectedPackService.parentPackServiceId,
+                                                            parentPackServiceName: selectedPackService.parentPackServiceName,
+                                                            packServiceTypeId: selectedPackService.packServiceTypeId,
+                                                            packServiceType: selectedPackService.packServiceType,
+                                                            packServicePrice: selectedPackService.packServicePrice,
+                                                            packServiceInstallCharge: changingUserPackService.packServiceInstallCharge,
+                                                            packServiceOthersCharge: changingUserPackService.packServiceOthersCharge,
+                                                            actualPayAmount: helper.requiredAmount,
+                                                            payAmount: helper.requiredAmount,
+                                                            saveAmount: helper.savedAmount,
+                                                            methodId: changingUserPackService.methodId,
+                                                            isUpGrade: helper.isUpgrade,
+                                                            isDownGrade: !helper.isUpgrade,
+                                                            isDefault: changingUserPackService.isDefault,
+                                                            expireDate: changingUserPackService.expireDate,
+                                                            activeDate: changingUserPackService.activeDate,
+                                                            isNew: false,
+                                                            isUpdate: true,
+                                                            isDelete: false,
+                                                            enabled: changingUserPackService.enabled,
+                                                            deductBalance: helper.deductedAmount, isBalanceDeduct: helper.deductedAmount > 0.0 ? true : false,
+                                                            isActive: changingUserPackService.isActive)
         
         let packUserInfo: PackUserInfo = PackUserInfo(id: changingUserPackService.accountId, userId: changingUserPackService.userId, values: "\(changingUserPackService.packServiceName ?? ""), \(selectedPackService.packServiceName ?? "")", loggeduserId: UserLocalStorage.getLoggedUserData()?.userID)
         
-        let newPackageSaveList = [NewPackageSave.newPackServiceArray([newPackService]), NewPackageSave.packUserInfo(packUserInfo)]
+        let newPackageSaveList = [NewPackageSave.newPackServiceArray(newPackService), NewPackageSave.packUserInfo(packUserInfo)]
         
         let jsonData = try? JSONEncoder().encode(newPackageSaveList)
         
@@ -204,7 +342,7 @@ class ProfileViewModel: ObservableObject {
         if let data = jsonData { jsonString = try? JSONSerialization.jsonObject(with: data, options: .allowFragments) }
         print(jsonString ?? "Error in json parsing...")
         
-        guard let urlComponents = URLComponents(string: NetworkApiService.webBaseUrl+"/api/ispuser/saveupdateuserpackserivce") else {
+        guard let urlComponents = URLComponents(string: NetworkApiService.webBaseUrl+"/api/ispuser/saveupdatesingleuserpackserivce") else {
             print("Problem in UrlComponent creation...")
             return nil
         }
@@ -329,6 +467,104 @@ class ProfileViewModel: ObservableObject {
         .decode(type: [PackService].self, decoder: JSONDecoder())
         .receive(on: RunLoop.main)
         .eraseToAnyPublisher()
+    }
+    
+    func getPackChangeConsumeData(userPackServiceId: Int) -> AnyPublisher<PackageChangeConsumeResponse, Error> {
+        let jsonObject = ["userPackServiceId": userPackServiceId]
+        let jsonArray = [jsonObject]
+        let jsonData = try! JSONSerialization.data(withJSONObject: jsonArray, options: [])
+        let params = String(data: jsonData, encoding: String.Encoding.ascii)
+        var queryItems = [URLQueryItem]()
+        
+        queryItems.append(URLQueryItem(name: "param", value: params))
+        var urlComponents = URLComponents(string: NetworkApiService.webBaseUrl+"/api/ispportal/getuserpackserviceconsumdata")
+        urlComponents?.queryItems = queryItems
+        
+        let url = urlComponents?.url
+        
+        var request = getCommonUrlRequest(url: url!)
+        request.httpMethod = "GET"
+        
+        return URLSession.shared.dataTaskPublisher(for: request)
+            .handleEvents(receiveSubscription: { _ in
+                self.showLoader.send(true)
+            }, receiveOutput: { _ in
+                self.showLoader.send(false)
+            }, receiveCompletion: { _ in
+                self.showLoader.send(false)
+            }, receiveCancel: {
+                self.showLoader.send(false)
+            })
+            .tryMap { data, response -> Data in
+                guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+                    throw NetworkApiService.APIFailureCondition.InvalidServerResponse
+                }
+                
+                return data
+        }
+        .retry(1)
+        .decode(type: PackageChangeConsumeResponse.self, decoder: JSONDecoder())
+        .receive(on: RunLoop.main)
+        .eraseToAnyPublisher()
+    }
+    
+    func getPayMethods() -> AnyPublisher<PayMethodResponse, Error> {
+        let jsonObject: [String: Any?] = [:]
+        let jsonArray = [jsonObject]
+
+        let jsonData = try! JSONSerialization.data(withJSONObject: jsonArray, options: [])
+        let params = String(data: jsonData, encoding: String.Encoding.ascii)
+        var queryItems = [URLQueryItem]()
+        
+        queryItems.append(URLQueryItem(name: "param", value: params))
+        var urlComponents = URLComponents(string: NetworkApiService.webBaseUrl+"/api/dropdown/getisppaymentmethod")
+        urlComponents?.queryItems = queryItems
+        
+        let url = urlComponents?.url
+        
+        var request = getCommonUrlRequest(url: url!)
+        request.httpMethod = "GET"
+        
+        return URLSession.shared.dataTaskPublisher(for: request)
+            .handleEvents(receiveSubscription: { _ in
+                self.showLoader.send(true)
+            }, receiveOutput: { _ in
+                self.showLoader.send(false)
+            }, receiveCompletion: { _ in
+                self.showLoader.send(false)
+            }, receiveCancel: {
+                self.showLoader.send(false)
+            })
+            .tryMap { data, response -> Data in
+                guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+                    throw NetworkApiService.APIFailureCondition.InvalidServerResponse
+                }
+                
+                return data
+        }
+        .retry(1)
+        .decode(type: PayMethodResponse.self, decoder: JSONDecoder())
+        .receive(on: RunLoop.main)
+        .eraseToAnyPublisher()
+    }
+    
+    func getPayMethodsAndConsumeData(selectedPackServiceId: Int) {
+        self.packChangePayConsumeSubscriber = Publishers.Zip(getPayMethods(), getPackChangeConsumeData(userPackServiceId: selectedPackServiceId))
+            .receive(on: RunLoop.main) // <<—— run on main thread
+            .eraseToAnyPublisher()
+            .sink(receiveCompletion: { completion in
+                switch completion {
+                    case .finished:
+                        break
+                    case .failure(let error):
+                        print(error.localizedDescription)
+                }
+            }, receiveValue: { (payMethodResponse, consumeDataResponse) in
+                guard let payMethods = payMethodResponse.resdata?.listPaymentMethod, let consumeData = consumeDataResponse.resdata else {
+                    return
+                }
+                self.showPackageChangePayModalPublisher.send((payMethods, consumeData))
+            })
     }
     
     func refreshUI() {

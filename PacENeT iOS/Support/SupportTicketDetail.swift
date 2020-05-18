@@ -67,6 +67,7 @@ struct SupportTicketDetail: View {
                                 .lineLimit(1).font(.callout)
                             Text("Size: \(imageSize ?? "N/A")").font(.caption).foregroundColor(.gray)
                         }
+                        Spacer()
                         Button(action: {
                             if self.viewModel.choosenImage != nil {
                                 self.viewModel.choosenImage = nil

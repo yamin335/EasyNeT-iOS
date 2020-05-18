@@ -85,7 +85,8 @@ struct PayHistRow: View {
         self._payHist = State(initialValue: payHist)
         if let status = payHist.paymentStatus {
             let temp = status.contains("::") ? status.components(separatedBy: "::")[0] : status
-            self._title = State(initialValue: temp)
+            let temp1 = temp.isEmpty ? "Unknown payment" : temp
+            self._title = State(initialValue: temp1)
         }
     }
     
@@ -136,15 +137,13 @@ struct PayServiceBillRowView: View {
     @State var item: UserPackService
     @ObservedObject var viewModel: BillingViewModel
     let payServiceBillModalShowDelegate: PayServiceBillModalShowDelegate
+    @State private var showBalanceRechargeAlert = false
     
     var payButton: some View {
         Text("Pay")
             .font(.system(size: 14))
             .font(.body)
             .onTapGesture {
-                self.payServiceBillModalShowDelegate.dismissModal()
-                self.viewModel.payingInvoiceId = 0
-                self.viewModel.payingUserPackServiceId = self.item.userPackServiceId
                 var amount = 0.0
                 if self.item.activeDate != nil {
                     amount = self.item.packServicePrice ?? 0.0
@@ -155,8 +154,16 @@ struct PayServiceBillRowView: View {
                 }
                 
                 if amount > 0.0 {
-                    self.viewModel.paymentAmount = amount
-                    self.viewModel.paymentOptionsModalPublisher.send(true)
+                    let userBalance = self.viewModel.userBalance?.balanceAmount ?? 0.0
+                    
+                    if userBalance >= amount {
+                        self.viewModel.billPaymentHelper = BillPaymentHelper(balanceAmount: amount, deductedAmount: amount, invoiceId: 0, userPackServiceId: self.item.userPackServiceId)
+                        self.showBalanceRechargeAlert = true
+                    } else {
+                        self.viewModel.billPaymentHelper = BillPaymentHelper(balanceAmount: amount - userBalance, deductedAmount: userBalance, invoiceId: 0, userPackServiceId: self.item.userPackServiceId)
+                        self.payServiceBillModalShowDelegate.dismissModal()
+                        self.viewModel.paymentOptionsModalPublisher.send(true)
+                    }
                 } else {
                     self.viewModel.errorToastPublisher.send((true, "Amount must be greater than 0.0 BDT"))
                 }
@@ -169,7 +176,12 @@ struct PayServiceBillRowView: View {
             .overlay (
                 RoundedRectangle(cornerRadius: 4, style: .circular)
                     .stroke(Color.gray, lineWidth: 0.5)
-            )
+            ).alert(isPresented:$showBalanceRechargeAlert) {
+                Alert(title: Text("Confirm Recharge"), message: Text("Are you sure to pay from your balance?"), primaryButton: .destructive(Text("Yes")) {
+                    self.payServiceBillModalShowDelegate.dismissModal()
+                    self.viewModel.payFromBalance()
+                    }, secondaryButton: .cancel(Text("No")))
+            }
     }
     var body: some View {
         HStack(alignment: .center, spacing: 5) {

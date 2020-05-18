@@ -155,7 +155,7 @@ struct Billing: View {
                 .foregroundColor(Colors.color2)
                 .padding(.leading, 20)
             
-            Text("\(viewModel.paymentAmount?.rounded(toPlaces: 2) ?? "0.0") BDT")
+            Text("\(viewModel.billPaymentHelper?.balanceAmount.rounded(toPlaces: 2) ?? "0.0") BDT")
                 .font(.headline)
                 .fontWeight(.bold)
                 .foregroundColor(Colors.color2)
@@ -285,7 +285,7 @@ struct Billing: View {
                         .frame(width: 200)
                         .padding(.trailing, (geometry.size.width / 2.0) - 120)
                     })
-            }
+            }.navigationViewStyle(StackNavigationViewStyle())
         }
     }
 }

@@ -35,10 +35,7 @@ struct MoreMenu: View {
         }
         .alert(isPresented:$showSignoutAlert) {
             Alert(title: Text("Sign Out"), message: Text("Are you sure to sign out?"), primaryButton: .destructive(Text("Yes")) {
-                UserLocalStorage.clearLoggedUserData()
-                UserLocalStorage.clearUserCredentials()
-                self.userData.isLoggedIn = false
-                self.userData.selectedTabItem = 0
+                self.viewModel.logOut()
                 }, secondaryButton: .cancel(Text("No")))
         }
     }
@@ -106,6 +103,7 @@ struct MoreMenu: View {
                         self.showChoiceBackground = false
                         self.clearTextFields()
                         //self.viewModel.changePassword()
+                        self.viewModel.errorToastPublisher.send((true, "You are not allowed to change the password!"))
                     }
                 }) {
                     Text("Save")
@@ -148,6 +146,11 @@ struct MoreMenu: View {
                             }
                         }) {
                             Text("Change Password").foregroundColor(.black)
+                        }
+                    }
+                    Section {
+                        NavigationLink(destination: PrivacyView()) {
+                            Text("Privacy Policy")
                         }
                     }
                 }.navigationBarTitle(Text("More"))
@@ -212,6 +215,14 @@ struct MoreMenu: View {
                     SpinLoaderView()
                 }
             }
+            .onReceive(self.viewModel.signoutPublisher.receive(on: RunLoop.main)) { doSignOut in
+                if doSignOut {
+                    UserLocalStorage.clearLoggedUserData()
+                    UserLocalStorage.clearUserCredentials()
+                    self.userData.isLoggedIn = false
+                    self.userData.selectedTabItem = 0
+                }
+            }
             .onReceive(self.viewModel.showLoader.receive(on: RunLoop.main)) { doingSomethingNow in
                 self.showLoader = doingSomethingNow
             }
@@ -229,7 +240,7 @@ struct MoreMenu: View {
                     self.showErrorToast = showToast
                 }
             }
-        }
+        }.navigationViewStyle(StackNavigationViewStyle())
     }
     
     func clearTextFields() {

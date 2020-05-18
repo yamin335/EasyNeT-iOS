@@ -39,6 +39,7 @@ struct UserPackService: Codable {
     let parentPackServiceName, particulars: String?
     let zoneId: Int?
     let packServicePrice: Double?
+    let payablePackService: Double?
     let packServiceInstallCharge, packServiceOthersCharge: Double?
     let activeDate, expireDate, billingStartDate, billingEndDate: String?
     let expireDay, graceDay: Int?
@@ -49,7 +50,7 @@ struct UserPackService: Codable {
     let actualPayAmount, payAmount, saveAmount: Double?
     let methodId: Int?
     let isParent, isUpGrade, isDownGrade, isNew: Bool?
-    let isUpdate, isDelete: Bool?
+    let isUpdate, isDelete, isChecked: Bool?
 }
 
 // MARK: - PackServiceResponse
@@ -97,7 +98,7 @@ struct NewPackService: Codable {
     let parentPackServiceName: String?
     let packServiceTypeId: Int?
     let packServiceType: String?
-    let packServicePrice, packServiceInstallCharge, packServiceOthersCharge, payAmount, saveAmount: Double?
+    let packServicePrice, packServiceInstallCharge, packServiceOthersCharge, actualPayAmount, payAmount, saveAmount: Double?
     let methodId: Int?
     let isUpGrade, isDownGrade, isDefault: Bool?
     let expireDate, activeDate: String?
@@ -115,7 +116,7 @@ struct PackUserInfo: Codable {
 
 // MARK: - NewPackageSave
 enum NewPackageSave: Encodable {
-    case newPackServiceArray([NewPackService])
+    case newPackServiceArray(NewPackService)
     case packUserInfo(PackUserInfo)
     
     func encode(to encoder: Encoder) throws {
@@ -127,4 +128,39 @@ enum NewPackageSave: Encodable {
             try container.encode(x)
         }
     }
+}
+
+// MARK: - PayMethodResponse
+struct PayMethodResponse: Codable {
+    let resdata: PayMethodResdata?
+}
+
+// MARK: - PayMethodResdata
+struct PayMethodResdata: Codable {
+    let listPaymentMethod: [PayMethod]?
+}
+
+// MARK: - PayMethod
+struct PayMethod: Codable {
+    let methodId: Int
+    let methodName: String?
+}
+
+// MARK: - PackageChangeConsumeResponse
+struct PackageChangeConsumeResponse: Codable {
+    let resdata: PackageChangeConsumeData?
+}
+
+// MARK: - PackageChangeConsumeData
+struct PackageChangeConsumeData: Codable {
+    let consumAmount, restAmount: Double?
+    let restDays: Int?
+    let isPossibleChange, isDue: Bool?
+}
+
+struct PackageChangeHelper {
+    let isUpgrade: Bool
+    let requiredAmount: Double
+    let savedAmount: Double
+    let deductedAmount: Double
 }

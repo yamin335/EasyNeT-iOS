@@ -24,17 +24,32 @@ struct InvoiceDetailView: View {
     @Environment(\.presentationMode) var presentationMode
     @ObservedObject var viewModel: BillingViewModel
     @State var invoice: Invoice
+    @State private var showBalanceRechargeAlert = false
     
     // MARK: - payButton
     var payButton: some View {
         HStack {
             Spacer()
             Button(action: {
-                self.viewModel.payingInvoiceId = self.invoice.ispInvoiceId
-                self.viewModel.payingUserPackServiceId = self.invoice.userPackServiceId
-                self.viewModel.paymentAmount = self.invoice.dueAmount
-                self.presentationMode.wrappedValue.dismiss()
-                self.viewModel.paymentOptionsModalPublisher.send(true)
+                let userBalance = self.viewModel.userBalance?.balanceAmount ?? 0.0
+                
+                guard let invoiceAmount = self.invoice.dueAmount, let packServiceId = self.invoice.userPackServiceId, let invoiceId = self.invoice.ispInvoiceId else {
+                    return
+                }
+                
+                if invoiceAmount > 0.0 {
+                    if userBalance >= invoiceAmount {
+                        self.viewModel.billPaymentHelper = BillPaymentHelper(balanceAmount: invoiceAmount, deductedAmount: invoiceAmount, invoiceId: invoiceId, userPackServiceId: packServiceId)
+                        self.showBalanceRechargeAlert = true
+                    } else {
+                        self.viewModel.billPaymentHelper = BillPaymentHelper(balanceAmount: invoiceAmount - userBalance, deductedAmount: userBalance, invoiceId: invoiceId, userPackServiceId: packServiceId)
+                        self.presentationMode.wrappedValue.dismiss()
+                        self.viewModel.paymentOptionsModalPublisher.send(true)
+                    }
+                } else {
+                    self.viewModel.errorToastPublisher.send((true, "Amount must be greater than 0.0 BDT"))
+                }
+            
             }) {
                 HStack {
                     Image(systemName: "dollarsign.circle.fill")
@@ -58,6 +73,11 @@ struct InvoiceDetailView: View {
                         .stroke(Color.gray, lineWidth: 0.5)
                 )
                 
+            }.alert(isPresented:$showBalanceRechargeAlert) {
+                Alert(title: Text("Confirm Recharge"), message: Text("Are you sure to pay from your balance?"), primaryButton: .destructive(Text("Yes")) {
+                    self.presentationMode.wrappedValue.dismiss()
+                    self.viewModel.payFromBalance()
+                    }, secondaryButton: .cancel(Text("No")))
             }
         }
         .padding(.top, 20)

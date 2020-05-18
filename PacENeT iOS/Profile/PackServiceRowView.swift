@@ -17,7 +17,7 @@ struct PackServiceRowView: View {
             .font(.system(size: 14))
             .font(.body)
             .onTapGesture {
-                self.viewModel.showServiceChangeModal.send((true, self.item))
+                self.viewModel.getPayMethodsAndConsumeData(selectedPackServiceId: self.item.userPackServiceId)
             }
             .foregroundColor(Colors.color7)
             .padding(.trailing, 10)
@@ -56,7 +56,23 @@ struct PackServiceRowView: View {
                     .font(.body)
             }
             Spacer()
-            changeButton
-        }.padding(.top, 4).padding(.bottom, 4)
+            if item.isActive == true{
+                changeButton
+            }
+        }
+        .padding(.top, 4)
+        .padding(.bottom, 4)
+        .onReceive(self.viewModel.showPackageChangePayModalPublisher.receive(on: RunLoop.main)) { (payMethods, consumeData) in
+            
+            guard consumeData.isPossibleChange == true else {
+                self.viewModel.warningToastPublisher.send((true, "Try next day again! or contact with support"))
+                return
+            }
+            
+            self.viewModel.payMethods = payMethods
+            self.viewModel.consumeData = consumeData
+            self.viewModel.showServiceChangeModal.send((true, self.item))
+            print("RestDays: \(consumeData.restDays ?? 0), RestAmount: \(consumeData.restAmount ?? 0.0)")
+        }
     }
 }

@@ -10,7 +10,7 @@ import Foundation
 
 // MARK: - DefaultAPIResponse
 struct DefaultResponse: Codable {
-    let resdata: Resdata
+    let resdata: Resdata?
 }
 
 // MARK: - Resdata

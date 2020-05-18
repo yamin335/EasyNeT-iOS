@@ -56,107 +56,12 @@ struct Dashboard: View {
         }
     }
     
-    var shortCutMenu: some View {
-        GeometryReader { window in
-            VStack(alignment: .center, spacing: 14) {
-                HStack(alignment: .top) {
-                    Spacer()
-                    VStack {
-                        Image("my_account")
-                            .resizable()
-                            .frame(width: self.getImageSize(size: window.size.width), height: self.getImageSize(size: window.size.width))
-                            
-                        Text("My Account")
-                            .frame(width: self.getImageSize(size: window.size.width))
-                            .fixedSize(horizontal: false, vertical: true)
-                            .multilineTextAlignment(.center)
-                    }
-                    //.padding(.top, 30)
-                    .onTapGesture {
-                        self.userData.selectedTabItem = 1
-                    }
-                    Spacer()
-                    VStack {
-                        Image("pay_now")
-                            .resizable()
-                            .frame(width: self.getImageSize(size: window.size.width), height: self.getImageSize(size: window.size.width))
-                          
-                        Text("Pay Now")
-                            .frame(width: self.getImageSize(size: window.size.width))
-                            .fixedSize(horizontal: false, vertical: true)
-                            .multilineTextAlignment(.center)
-                    }
-                    //.padding(.top, 30)
-                    .onTapGesture {
-                        self.userData.selectedTabItem = 2
-                    }
-                    Spacer()
-                    VStack {
-                        Image("pay_history")
-                            .resizable()
-                            .frame(width: self.getImageSize(size: window.size.width), height: self.getImageSize(size: window.size.width))
-                          
-                        Text("Bill History")
-                            .frame(width: self.getImageSize(size: window.size.width))
-                            .fixedSize(horizontal: false, vertical: true)
-                            .multilineTextAlignment(.center)
-                    }
-                    //.padding(.top, 30)
-                    .onTapGesture {
-                        self.userData.selectedTabItem = 2
-                    }
-                    Spacer()
-                }
-                //.background(Color.blue)
-                
-                HStack(alignment: .top) {
-                    Spacer()
-                    VStack {
-                        Image("packages")
-                            .resizable()
-                            .frame(width: self.getImageSize(size: window.size.width), height: self.getImageSize(size: window.size.width))
-                          
-                        Text("Packages")
-                            .frame(width: self.getImageSize(size: window.size.width))
-                    }
-                    .onTapGesture {
-                        self.userData.selectedTabItem = 1
-                    }
-                    Spacer()
-                    VStack {
-                        Image("open_ticket")
-                            .resizable()
-                            .frame(width: self.getImageSize(size: window.size.width), height: self.getImageSize(size: window.size.width))
-                            
-                        Text("Open Ticket")
-                            .frame(width: self.getImageSize(size: window.size.width))
-                            .fixedSize(horizontal: false, vertical: true)
-                            .multilineTextAlignment(.center)
-                    }
-                    .onTapGesture {
-                        self.userData.selectedTabItem = 3
-                    }
-                    Spacer()
-                    VStack {
-                        Image("ticket_history")
-                            .resizable()
-                            .frame(width: self.getImageSize(size: window.size.width), height: self.getImageSize(size: window.size.width))
-                          
-                        Text("Ticket History")
-                            .frame(width: self.getImageSize(size: window.size.width))
-                            .fixedSize(horizontal: false, vertical: true)
-                            .multilineTextAlignment(.center)
-                    }
-                    .onTapGesture {
-                        self.userData.selectedTabItem = 3
-                    }
-                    Spacer()
-                }
-                //.background(Color.red)
-            }
-            //.background(Color.green)
-        }
-    }
+//    var shortCutMenu: some View {
+//        GeometryReader { window in
+//
+//            //.background(Color.green)
+//        }
+//    }
     
     var modalBackground: some View {
         VStack {
@@ -307,75 +212,177 @@ struct Dashboard: View {
     }
     
     var chartView: some View {
-        GeometryReader { geometry in
-            ZStack(alignment: .bottom) {
-                if self.showSessionChart {
+        ZStack(alignment: .bottom) {
+            if self.showSessionChart {
+                VStack {
+                    Spacer()
                     LineChartSwiftUI(viewModel: self.dashboardViewModel)
-                } else {
-                    Text("No Session Data Found")
-                        .foregroundColor(Colors.color3)
                 }
-                
-            }.frame(width: geometry.size.width - 18, height: geometry.size.height)
+            } else {
+                Text("No Session Data Found")
+                    .foregroundColor(Colors.color3)
+            }
         }
     }
     
     var body: some View {
-        ZStack {
-            VStack(spacing: 0) {
-                self.shortCutMenu.frame(minWidth: 0, maxWidth: .infinity)
-                
-                self.chartHeader
+        GeometryReader { geometry in
+            ZStack {
+                VStack(spacing: 0) {
+//                    self.shortCutMenu.frame(minWidth: 0, maxWidth: .infinity)
+                    Group {
+                        VStack(alignment: .center) {
+                            HStack(alignment: .top) {
+                                Spacer()
+                                VStack {
+                                    Image("my_account")
+                                        .resizable()
+                                        .frame(width: self.getImageSize(width: geometry.size.width, height: (geometry.size.height / 2) - 20), height: self.getImageSize(width: geometry.size.width, height: (geometry.size.height / 2) - 20))
+                                        
+                                    Text("My Account")
+                                        .frame(width: self.getImageSize(width: geometry.size.width, height: (geometry.size.height / 2) - 20))
+                                        .fixedSize(horizontal: false, vertical: true)
+                                        .multilineTextAlignment(.center)
+                                }
+                                //.padding(.top, 30)
+                                .onTapGesture {
+                                    self.userData.selectedTabItem = 1
+                                }
+                                Spacer()
+                                VStack {
+                                    Image("pay_now")
+                                        .resizable()
+                                        .frame(width: self.getImageSize(width: geometry.size.width, height: (geometry.size.height / 2) - 20), height: self.getImageSize(width: geometry.size.width, height: (geometry.size.height / 2) - 20))
+                                      
+                                    Text("Pay Now")
+                                        .frame(width: self.getImageSize(width: geometry.size.width, height: (geometry.size.height / 2) - 20))
+                                        .fixedSize(horizontal: false, vertical: true)
+                                        .multilineTextAlignment(.center)
+                                }
+                                //.padding(.top, 30)
+                                .onTapGesture {
+                                    self.userData.selectedTabItem = 2
+                                }
+                                Spacer()
+                                VStack {
+                                    Image("pay_history")
+                                        .resizable()
+                                        .frame(width: self.getImageSize(width: geometry.size.width, height: (geometry.size.height / 2) - 20), height: self.getImageSize(width: geometry.size.width, height: (geometry.size.height / 2) - 20))
+                                      
+                                    Text("Bill History")
+                                        .frame(width: self.getImageSize(width: geometry.size.width, height: (geometry.size.height / 2) - 20))
+                                        .fixedSize(horizontal: false, vertical: true)
+                                        .multilineTextAlignment(.center)
+                                }
+                                //.padding(.top, 30)
+                                .onTapGesture {
+                                    self.userData.selectedTabItem = 2
+                                }
+                                Spacer()
+                            }
+                            Spacer()
+                            
+                            HStack(alignment: .top) {
+                                Spacer()
+                                VStack {
+                                    Image("packages")
+                                        .resizable()
+                                        .frame(width: self.getImageSize(width: geometry.size.width, height: (geometry.size.height / 2) - 20), height: self.getImageSize(width: geometry.size.width, height: (geometry.size.height / 2) - 20))
+                                      
+                                    Text("Packages")
+                                        .frame(width: self.getImageSize(width: geometry.size.width, height: (geometry.size.height / 2) - 20))
+                                }
+                                .onTapGesture {
+                                    self.userData.selectedTabItem = 1
+                                }
+                                Spacer()
+                                VStack {
+                                    Image("open_ticket")
+                                        .resizable()
+                                        .frame(width: self.getImageSize(width: geometry.size.width, height: (geometry.size.height / 2) - 20), height: self.getImageSize(width: geometry.size.width, height: (geometry.size.height / 2) - 20))
+                                        
+                                    Text("Open Ticket")
+                                        .frame(width: self.getImageSize(width: geometry.size.width, height: (geometry.size.height / 2) - 20))
+                                        .fixedSize(horizontal: false, vertical: true)
+                                        .multilineTextAlignment(.center)
+                                }
+                                .onTapGesture {
+                                    self.userData.selectedTabItem = 3
+                                }
+                                Spacer()
+                                VStack {
+                                    Image("ticket_history")
+                                        .resizable()
+                                        .frame(width: self.getImageSize(width: geometry.size.width, height: (geometry.size.height / 2) - 20), height: self.getImageSize(width: geometry.size.width, height: (geometry.size.height / 2) - 20))
+                                      
+                                    Text("Ticket History")
+                                        .frame(width: self.getImageSize(width: geometry.size.width, height: (geometry.size.height / 2) - 20))
+                                        .fixedSize(horizontal: false, vertical: true)
+                                        .multilineTextAlignment(.center)
+                                }
+                                .onTapGesture {
+                                    self.userData.selectedTabItem = 3
+                                }
+                                Spacer()
+                            }
+                            Spacer()
+                        }.frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: (geometry.size.height / 2) - 20)
+                    }
+                    
+                    self.chartHeader.frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: 40)
 
-                self.chartView
-                
-            }.onReceive(self.dashboardViewModel.typeIndexPublisher.receive(on: RunLoop.main)) { value in
-                self.selectedType = value
-            }
-            .onReceive(self.dashboardViewModel.monthIndexPublisher.receive(on: RunLoop.main)) { value in
-                self.selectedMonth = value
-            }
-            .onReceive(self.dashboardViewModel.sessionChartDataPublisher.receive(on: RunLoop.main)) { value in
-                
-                if value {
-                    self.showSessionChart = true
-                } else {
+                    self.chartView.frame(width: geometry.size.width - 18, height: (geometry.size.height/2) - 40)
+                    
+                }.onReceive(self.dashboardViewModel.typeIndexPublisher.receive(on: RunLoop.main)) { value in
+                    self.selectedType = value
+                }
+                .onReceive(self.dashboardViewModel.monthIndexPublisher.receive(on: RunLoop.main)) { value in
+                    self.selectedMonth = value
+                }
+                .onReceive(self.dashboardViewModel.sessionChartDataPublisher.receive(on: RunLoop.main)) { value in
+                    
+                    if value {
+                        self.showSessionChart = true
+                    } else {
+                        self.showSessionChart = false
+                    }
+                }
+                .onReceive(self.dashboardViewModel.showLoader.receive(on: RunLoop.main)) { shouldShow in
+                    self.showLoader = shouldShow
+                }
+                .onAppear() {
+                    let date = Date()
+                    let dateFormatter = DateFormatter()
+                    let calendar = dateFormatter.calendar
+                    guard let month = calendar?.component(.month, from: date) else {
+                        return
+                    }
+                    self.dashboardViewModel.getSessionChartData(month: month, type: "daily")
+                    self.dashboardViewModel.typeIndexPublisher.send(1)
+                    self.dashboardViewModel.monthIndexPublisher.send(month - 1)
+                }.onDisappear() {
                     self.showSessionChart = false
                 }
-            }
-            .onReceive(self.dashboardViewModel.showLoader.receive(on: RunLoop.main)) { shouldShow in
-                self.showLoader = shouldShow
-            }
-            .onAppear() {
-                let date = Date()
-                let dateFormatter = DateFormatter()
-                let calendar = dateFormatter.calendar
-                guard let month = calendar?.component(.month, from: date) else {
-                    return
+                
+                if self.showModalBackGround {
+                    self.modalBackground
                 }
-                self.dashboardViewModel.getSessionChartData(month: month, type: "daily")
-                self.dashboardViewModel.typeIndexPublisher.send(1)
-                self.dashboardViewModel.monthIndexPublisher.send(month - 1)
-            }.onDisappear() {
-                self.showSessionChart = false
-            }
-            
-            if showModalBackGround {
-                modalBackground
-            }
-            
-            if showChartChangeModal {
-                chartChangeModal
-            }
-            
-            if self.showLoader {
-                SpinLoaderView()
+                
+                if self.showChartChangeModal {
+                    self.chartChangeModal
+                }
+                
+                if self.showLoader {
+                    SpinLoaderView()
+                }
             }
         }
     }
     
-    func getImageSize(size: CGFloat) -> CGFloat {
-        return (size - 4*20)/3
+    func getImageSize(width: CGFloat, height: CGFloat) -> CGFloat {
+        let tempWidth = (width - 4*20)/3
+        let tempHeight = (height - 4*20)/2
+        return tempWidth > tempHeight ? tempHeight : tempWidth
     }
 }
 
@@ -389,6 +396,7 @@ struct LineChartSwiftUI: UIViewRepresentable {
 
     func updateUIView(_ lineChartView: LineChartView, context: Context) {
         setUpChart(chartView: lineChartView , sessionChartDataList: viewModel.sessionChartData)
+        lineChartView.animate(xAxisDuration: 0.7)
     }
 
     func setUpChart(chartView: LineChartView, sessionChartDataList: [SessionChartData]?) {
@@ -435,6 +443,7 @@ struct LineChartSwiftUI: UIViewRepresentable {
         let uploadDataColor = ChartColorTemplates.vordiplom()[3]
         uploadDataSet.setColor(uploadDataColor)
         uploadDataSet.setCircleColor(uploadDataColor)
+        uploadDataSet.mode = LineChartDataSet.Mode.cubicBezier
         
         let downloadDataPoints = getChartDataPoints(xAxixValues: xValues, dataValues: downloadDataList)
         let downloadDataSet = LineChartDataSet(entries: downloadDataPoints, label: "Download")
@@ -444,6 +453,7 @@ struct LineChartSwiftUI: UIViewRepresentable {
         let downloadDataColor = ChartColorTemplates.vordiplom()[4]
         downloadDataSet.setColor(downloadDataColor)
         downloadDataSet.setCircleColor(downloadDataColor)
+        downloadDataSet.mode = LineChartDataSet.Mode.cubicBezier
         return [uploadDataSet, downloadDataSet]
     }
     

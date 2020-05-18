@@ -217,11 +217,9 @@ class SupportViewModel: ObservableObject {
                         print(error.localizedDescription)
                 }
             }, receiveValue: { response in
-                if let resstate = response.resdata.resstate {
-                    if resstate == true {
-                        self.getTicketDetail(ispTicketId: ispTicketId)
-                        self.choosenImage = nil
-                    }
+                if response.resdata != nil {
+                    self.getTicketDetail(ispTicketId: ispTicketId)
+                    self.choosenImage = nil
                 }
             })
     }
@@ -304,7 +302,7 @@ class SupportViewModel: ObservableObject {
                         print(error.localizedDescription)
                 }
             }, receiveValue: { response in
-                if let resstate = response.resdata.resstate {
+                if let resstate = response.resdata?.resstate {
                     if resstate == true {
                         self.newEntryPublisher.send(true)
                         self.successToastPublisher.send((true, "Saved Successfully!"))

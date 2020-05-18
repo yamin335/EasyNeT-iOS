@@ -80,7 +80,7 @@ struct Support: View {
             if self.showLoader {
                 SpinLoaderView()
             }
-        }
+        }.navigationViewStyle(StackNavigationViewStyle())
     }
 }
 
