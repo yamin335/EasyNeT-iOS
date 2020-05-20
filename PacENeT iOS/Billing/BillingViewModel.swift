@@ -96,7 +96,7 @@ class BillingViewModel: ObservableObject {
     // MARK: - getBkashToken()
     // This function gets bkash payment token
     func getBkashToken() {
-        self.getBkashTokenSubscriber = self.executeGetBkashTokenApiCall()?
+        self.getBkashTokenSubscriber = self.getBkashTokenApiCall()?
             .sink(receiveCompletion: { completion in
                 switch completion {
                     case .finished:
@@ -115,7 +115,7 @@ class BillingViewModel: ObservableObject {
             })
     }
     
-    func executeGetBkashTokenApiCall() -> AnyPublisher<BKashTokenResponse, Error>? {
+    func getBkashTokenApiCall() -> AnyPublisher<BKashTokenResponse, Error>? {
         
         guard let paymentHelper = billPaymentHelper else {
             self.errorToastPublisher.send((true, "Payment cancelled!, please try again later"))
@@ -127,7 +127,7 @@ class BillingViewModel: ObservableObject {
             return nil
         }
         
-        let jsonObject = ["invId": paymentHelper.invoiceId, "id": paymentHelper.userPackServiceId, "rechargeAmount": paymentHelper.balanceAmount, "loggedUserId": userId] as [String : Any]
+        let jsonObject = ["invId": paymentHelper.invoiceId, "id": paymentHelper.userPackServiceId, "rechargeAmount": paymentHelper.balanceAmount, "deductedAmount": paymentHelper.deductedAmount, "loggedUserId": userId] as [String : Any]
         let jsonArray = [jsonObject]
         
         guard let jsonData = try? JSONSerialization.data(withJSONObject: jsonArray, options: []) else {
@@ -218,9 +218,11 @@ class BillingViewModel: ObservableObject {
         
         let jsonObject = ["authToken": token,
                           "rechargeAmount": paymentHelper.balanceAmount,
+                          "deductedAmount": paymentHelper.deductedAmount,
                           "Name": "sale",
                           "currency": currency,
-                          "mrcntNumber": marchantInvNo] as [String : Any]
+                          "mrcntNumber": marchantInvNo,
+                          "canModify": paymentHelper.canModify] as [String : Any]
         let jsonArray = [jsonObject]
         
         guard let jsonData = try? JSONSerialization.data(withJSONObject: jsonArray, options: []) else {
@@ -298,7 +300,7 @@ class BillingViewModel: ObservableObject {
     
     func executeBkashPaymentApiCall() -> AnyPublisher<BKashExecutePaymentResponse, Error>? {
         
-        guard let data = bkashTokenModel?.token?.data(using: .utf8) else {
+        guard let data = bkashTokenModel?.token?.data(using: .utf8), let marchantInvNo = bkashTokenModel?.marchantInvNo else {
             self.paymentCancellation(message: "Payment cancelled!, please try again later")
             return nil
         }
@@ -309,6 +311,7 @@ class BillingViewModel: ObservableObject {
         }
         
         let jsonObject = ["authToken": token,
+                          "mrcntNumber": marchantInvNo,
                           "paymentID": paymentID] as [String : Any]
         let jsonArray = [jsonObject]
         
@@ -502,7 +505,7 @@ class BillingViewModel: ObservableObject {
             return nil
         }
         
-        let jsonObject = ["UserID": userId, "rechargeAmount": paymentHelper.balanceAmount, "IsActive": true ] as [String : Any]
+        let jsonObject = ["UserID": userId, "rechargeAmount": paymentHelper.balanceAmount, "deductedAmount": paymentHelper.deductedAmount ] as [String : Any]
         let jsonArray = [jsonObject]
         
         guard let jsonData = try? JSONSerialization.data(withJSONObject: jsonArray, options: []) else {

@@ -20,6 +20,9 @@
 		6E2B71E6244E8DDC00C79A0E /* MailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E2B71E5244E8DDC00C79A0E /* MailView.swift */; };
 		6E308B8624725C6900484208 /* PGWViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E308B8524725C6900484208 /* PGWViewModel.swift */; };
 		6E51D92724417ACD00C09D9F /* SupportTicketEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E51D92624417ACD00C09D9F /* SupportTicketEntry.swift */; };
+		6E56299224745D8F004E78D3 /* BkashPGW.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E56299124745D8F004E78D3 /* BkashPGW.swift */; };
+		6E56299624746540004E78D3 /* FosterPGW.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E56299524746540004E78D3 /* FosterPGW.swift */; };
+		6E56299824746927004E78D3 /* PGWView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E56299724746927004E78D3 /* PGWView.swift */; };
 		6E67D1B8243E1C83000B11FB /* SupportModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E67D1B7243E1C83000B11FB /* SupportModels.swift */; };
 		6E67D1BC243E39AD000B11FB /* SupportTicketRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E67D1BB243E39AD000B11FB /* SupportTicketRow.swift */; };
 		6E8C457A2429EAF000BC9276 /* Charts.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6E8C45772429EAA800BC9276 /* Charts.framework */; };
@@ -127,6 +130,9 @@
 		6E2B71E5244E8DDC00C79A0E /* MailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MailView.swift; sourceTree = "<group>"; };
 		6E308B8524725C6900484208 /* PGWViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PGWViewModel.swift; sourceTree = "<group>"; };
 		6E51D92624417ACD00C09D9F /* SupportTicketEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportTicketEntry.swift; sourceTree = "<group>"; };
+		6E56299124745D8F004E78D3 /* BkashPGW.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BkashPGW.swift; sourceTree = "<group>"; };
+		6E56299524746540004E78D3 /* FosterPGW.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FosterPGW.swift; sourceTree = "<group>"; };
+		6E56299724746927004E78D3 /* PGWView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PGWView.swift; sourceTree = "<group>"; };
 		6E67D1B7243E1C83000B11FB /* SupportModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportModels.swift; sourceTree = "<group>"; };
 		6E67D1BB243E39AD000B11FB /* SupportTicketRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportTicketRow.swift; sourceTree = "<group>"; };
 		6E8C45712429EAA800BC9276 /* Charts.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Charts.xcodeproj; path = "../../Downloads/Charts-master/Charts.xcodeproj"; sourceTree = "<group>"; };
@@ -319,6 +325,9 @@
 			isa = PBXGroup;
 			children = (
 				6E308B8524725C6900484208 /* PGWViewModel.swift */,
+				6E56299124745D8F004E78D3 /* BkashPGW.swift */,
+				6E56299524746540004E78D3 /* FosterPGW.swift */,
+				6E56299724746927004E78D3 /* PGWView.swift */,
 			);
 			path = PaymentGateway;
 			sourceTree = "<group>";
@@ -580,6 +589,7 @@
 				6EA2F9EF2444B9D200340EB0 /* InvoiceDetailView.swift in Sources */,
 				FD9362E823B4D42700C1A9CB /* ColorValues.swift in Sources */,
 				6E2B71E6244E8DDC00C79A0E /* MailView.swift in Sources */,
+				6E56299824746927004E78D3 /* PGWView.swift in Sources */,
 				6E0DEDE8244B8A6E00E2639F /* FosterWebView.swift in Sources */,
 				6EA2F9E92444B83400340EB0 /* InvoiceView.swift in Sources */,
 				FD9362EF23B4D45600C1A9CB /* NetworkApiService.swift in Sources */,
@@ -605,10 +615,12 @@
 				FDB3BA5323B8B162007B1552 /* Support.swift in Sources */,
 				6E10E2C82433B6B60082F4C8 /* ProfileModels.swift in Sources */,
 				6EE687902437DF2E00E7310C /* PackServiceRowView.swift in Sources */,
+				6E56299224745D8F004E78D3 /* BkashPGW.swift in Sources */,
 				FD9362E223B4D42700C1A9CB /* LoginViewModel.swift in Sources */,
 				FD7E6C2823B2210700BF5FB0 /* UserData.swift in Sources */,
 				6E67D1BC243E39AD000B11FB /* SupportTicketRow.swift in Sources */,
 				6E67D1B8243E1C83000B11FB /* SupportModels.swift in Sources */,
+				6E56299624746540004E78D3 /* FosterPGW.swift in Sources */,
 				6E10E2C22433270C0082F4C8 /* SupportViewModel.swift in Sources */,
 				6EDA00752447DFF5006BC870 /* AnyGestureRecognizer.swift in Sources */,
 				FC4D286F24234013005564C9 /* DashboardModels.swift in Sources */,

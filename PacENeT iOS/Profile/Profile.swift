@@ -13,6 +13,7 @@ struct Profile: View {
     @State var isPackageSheetPresented = false
     @EnvironmentObject var userData: UserData
     @ObservedObject var viewModel = ProfileViewModel()
+    @ObservedObject var pgwViewModel = PGWViewModel()
     @State private var showSignoutAlert = false
     @State private var name = ""
     @State private var createDate = ""
@@ -20,7 +21,6 @@ struct Profile: View {
     @State private var packageCharge = ""
     @State private var email = ""
     @State private var phone = ""
-    @State private var userPackServices = [UserPackService]()
     @State var changingUserPackService: UserPackService?
     @State private var showLoader = false
     
@@ -31,6 +31,12 @@ struct Profile: View {
     @State var warningMessage: String = ""
     @State var showErrorToast = false
     @State var errorMessage: String = ""
+    
+    @State var showPaymentOptionsModal = false
+    @State var showChoiseBackGround = false
+    
+    @State var showPGW = false
+    @State var pgw: PGW = .BKASH
     
     var signoutButton: some View {
         Button(action: {
@@ -165,6 +171,143 @@ struct Profile: View {
         }
     }
     
+    var background: some View {
+        VStack {
+            Rectangle().background(Color.black).blur(radius: 0.5, opaque: false).opacity(0.3)
+        }
+        .transition(.asymmetric(insertion: .opacity, removal: .opacity)).animation(.default)
+        .zIndex(1)
+    }
+    
+    var modalHeader: some View {
+        VStack {
+            HStack {
+                Text("Pay With")
+                    .font(.title)
+                    .fontWeight(.heavy)
+                    .foregroundColor(Colors.color2)
+                Spacer()
+                Button(action: {
+                    withAnimation {
+                        self.showPaymentOptionsModal = false
+                        self.showChoiseBackGround = false
+                    }
+                }) {
+                    Text("Cancel")
+                        .font(.system(size: 18, weight: .regular))
+                        .foregroundColor(.blue)
+                }
+            }
+            .padding(.top, 16)
+            .padding(.leading, 20)
+            .padding(.trailing, 20)
+        }.background(Color.white.opacity(0))
+    }
+    
+    var modalOptions: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("Debit/Credit Cards")
+                .font(.headline)
+                .foregroundColor(Colors.color2).padding(.top, 8)
+            
+            HStack {
+                Spacer()
+                Image("visa_card_logo")
+                .resizable()
+                .frame(width: 250, height: 90)
+                .scaledToFit()
+                .overlay (
+                    RoundedRectangle(cornerRadius: 4, style: .circular)
+                        .stroke(Color.gray, lineWidth: 0.5)
+                ).onTapGesture {
+                    guard let payAmount = self.viewModel.packChangeHelper?.payAmount, payAmount > 0, let userPackServiceId = self.viewModel.changingUserPackService?.userPackServiceId else {
+                        self.viewModel.errorToastPublisher.send((true, "Invalid Amount!"))
+                        return
+                    }
+                    self.pgwViewModel.billPaymentHelper = BillPaymentHelper(balanceAmount: payAmount, deductedAmount: 0.0, invoiceId: 0, userPackServiceId: userPackServiceId, canModify: true)
+                    self.pgwViewModel.getFosterPaymentUrl()
+                    withAnimation {
+                        self.showPaymentOptionsModal = false
+                        self.showChoiseBackGround = false
+                    }
+                }
+                Spacer()
+            }.padding(.top, 6)
+            
+            Text("Bkash Mobile Banking")
+                .font(.headline)
+                .foregroundColor(Colors.color2)
+                .padding(.top, 24)
+            
+            HStack {
+                Spacer()
+                Image("bkash_logo")
+                .resizable()
+                .frame(width: 250, height: 90)
+                .scaledToFit()
+                .overlay (
+                    RoundedRectangle(cornerRadius: 4, style: .circular)
+                        .stroke(Color.gray, lineWidth: 0.5)
+                ).onTapGesture {
+                    guard let payAmount = self.viewModel.packChangeHelper?.payAmount, payAmount > 0, let userPackServiceId = self.viewModel.changingUserPackService?.userPackServiceId else {
+                        self.viewModel.errorToastPublisher.send((true, "Invalid Amount!"))
+                        return
+                    }
+                    self.pgwViewModel.billPaymentHelper = BillPaymentHelper(balanceAmount: payAmount, deductedAmount: 0.0, invoiceId: 0, userPackServiceId: userPackServiceId, canModify: true)
+                    self.pgwViewModel.getBkashToken()
+                    withAnimation {
+                        self.showPaymentOptionsModal = false
+                        self.showChoiseBackGround = false
+                    }
+                }
+                Spacer()
+            }.padding(.top, 6)
+        }
+        .padding(.leading, 20)
+        .padding(.trailing, 20)
+        .padding(.top, 8)
+    }
+    
+    var amountView: some View {
+        HStack {
+            Text("Bill Amount:")
+                .font(.headline)
+                .foregroundColor(Colors.color2)
+                .padding(.leading, 20)
+            
+            Text("\(viewModel.packChangeHelper?.payAmount.rounded(toPlaces: 2) ?? "0.0") BDT")
+                .font(.headline)
+                .fontWeight(.bold)
+                .foregroundColor(Colors.color2)
+                .padding(.trailing, 20)
+            
+            Spacer()
+        }
+    }
+    
+    var paymentOptionsModal: some View {
+        VStack(alignment: .leading) {
+            Spacer()
+            VStack(alignment: .leading) {
+                modalHeader
+                Divider().padding(.bottom, 10)
+                amountView
+                modalOptions
+            }
+            .padding(.bottom, 30)
+            .frame(minWidth: 0, maxWidth: .infinity)
+            .background(ChatBubble(fillColor: Color.white, topLeft: 10, topRight: 10, bottomLeft: 0, bottomRight: 0))
+        }
+        .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
+        .onAppear {
+            withAnimation {
+                self.showChoiseBackGround = true
+            }
+        }
+        .transition(.asymmetric(insertion: .move(edge: .bottom), removal: .move(edge: .bottom))).animation(.default)
+        .zIndex(2)
+    }
+    
     var body: some View {
         
         NavigationView {
@@ -179,11 +322,14 @@ struct Profile: View {
                         .padding(.trailing, 16)
                         .foregroundColor(.gray)
                     
-                    balanceView.padding(.leading, 16).padding(.trailing, 16).padding(.top, 5)
-                    dueView.padding(.leading, 16).padding(.trailing, 16).padding(.top, 8)
-                    createView.padding(.leading, 16).padding(.trailing, 16).padding(.top, 8)
-                    emailView.padding(.leading, 16).padding(.trailing, 16).padding(.top, 8)
-                    phoneView.padding(.leading, 16).padding(.trailing, 16).padding(.top, 8)
+                    Group {
+                        balanceView.padding(.leading, 16).padding(.trailing, 16).padding(.top, 5)
+                        dueView.padding(.leading, 16).padding(.trailing, 16).padding(.top, 8)
+                        createView.padding(.leading, 16).padding(.trailing, 16).padding(.top, 8)
+                        emailView.padding(.leading, 16).padding(.trailing, 16).padding(.top, 8)
+                        phoneView.padding(.leading, 16).padding(.trailing, 16).padding(.top, 8)
+                    }
+                    
                     Text("Your Services")
                     .font(.system(size: 17))
                     .fontWeight(.heavy)
@@ -191,16 +337,9 @@ struct Profile: View {
                     .padding(.leading, 16)
                     .padding(.trailing, 16)
                     .foregroundColor(.gray)
-                    List {
-                        VStack {
-                            ForEach(userPackServices, id: \.userPackServiceId) { dataItem in
-                                VStack {
-                                    PackServiceRowView(item: dataItem, viewModel: self.viewModel)
-                                    if !self.viewModel.userPackServices.isLastUserPack(item: dataItem) {
-                                        Divider()
-                                    }
-                                }
-                            }
+                    VStack {
+                        List(self.viewModel.userPackServices, id: \.userPackServiceId) { dataItem in
+                            PackServiceRowView(item: dataItem, viewModel: self.viewModel)
                         }
                     }
                     .onReceive(self.viewModel.showLoader.receive(on: RunLoop.main)) { shouldShow in
@@ -218,10 +357,36 @@ struct Profile: View {
                         self.showSuccessToast = shouldShow
                         self.successMessage = message
                     }
-                    .onReceive(self.viewModel.$userPackServices.receive(on: RunLoop.main)) {
-                            userPackServices in
-                        withAnimation {
-                            self.userPackServices = userPackServices
+                    .onReceive(self.pgwViewModel.showLoader.receive(on: RunLoop.main)) { shouldShow in
+                        self.showLoader = shouldShow
+                    }
+                    .onReceive(self.pgwViewModel.warningToastPublisher.receive(on: RunLoop.main)) { (shouldShow, message) in
+                        self.showWarningToast = shouldShow
+                        self.warningMessage = message
+                    }
+                    .onReceive(self.pgwViewModel.errorToastPublisher.receive(on: RunLoop.main)) { (shouldShow, message) in
+                        self.showErrorToast = shouldShow
+                        self.errorMessage = message
+                    }
+                    .onReceive(self.pgwViewModel.successToastPublisher.receive(on: RunLoop.main)) { (shouldShow, message) in
+                        self.showSuccessToast = shouldShow
+                        self.successMessage = message
+                    }
+                    .onReceive(self.viewModel.paymentOptionsModalPublisher.receive(on: RunLoop.main)) { shouldShow in
+                        self.showPaymentOptionsModal = shouldShow
+                    }
+                    .onReceive(self.pgwViewModel.bkashPaymentStatusPublisher.receive(on: RunLoop.main)) { (isSuccessful, response) in
+                        if isSuccessful {
+                            self.viewModel.saveChangedPackByBkash(bkashResData: response!)
+                        } else {
+                            self.viewModel.errorToastPublisher.send((true, "Payment not successful, please try again later!"))
+                        }
+                    }
+                    .onReceive(self.pgwViewModel.fosterPaymentStatusPublisher.receive(on: RunLoop.main)) { (isSuccessful, response) in
+                        if isSuccessful {
+                            self.viewModel.saveChangedPackByFoster(fosterModel: response)
+                        } else {
+                            self.viewModel.errorToastPublisher.send((true, "Payment not successful, please try again later!"))
                         }
                     }
                 }
@@ -229,12 +394,28 @@ struct Profile: View {
                     self.changingUserPackService = packService
                     self.isPackageSheetPresented = boolData
                 }
-                .onAppear {
-                    self.viewModel.getUserPackServiceData()
-                    self.viewModel.getPackServiceData()
+                .onReceive(self.pgwViewModel.showPGW.receive(on: RunLoop.main)) { (shouldShow, pgw) in
+                    self.pgw = pgw
+                    self.showPGW = shouldShow
+                }
+                .onAppear() {
+                    self.prepareProfileData()
+                    self.viewModel.refreshUI()
                 }
                 .background(Color.white).navigationBarTitle(Text("Profile"))
                     .navigationBarItems(leading: refreshButton)
+                
+                if self.showChoiseBackGround {
+                    self.background
+                }
+                
+                if self.showPaymentOptionsModal {
+                    self.paymentOptionsModal
+                }
+                
+                if showPGW {
+                    PGWView(viewModel: pgwViewModel, pgw: pgw)
+                }
                 
                 if self.showSuccessToast {
                     VStack {
@@ -291,10 +472,6 @@ struct Profile: View {
         }, content: {
             PackageChangeView(viewModel: self.viewModel, changingUserPackService: self.changingUserPackService!)
         })
-        .onAppear() {
-            self.prepareProfileData()
-            self.viewModel.getUserBalance()
-        }
     }
     
     func prepareProfileData() {

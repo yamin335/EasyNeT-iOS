@@ -39,10 +39,10 @@ struct InvoiceDetailView: View {
                 
                 if invoiceAmount > 0.0 {
                     if userBalance >= invoiceAmount {
-                        self.viewModel.billPaymentHelper = BillPaymentHelper(balanceAmount: invoiceAmount, deductedAmount: invoiceAmount, invoiceId: invoiceId, userPackServiceId: packServiceId)
+                        self.viewModel.billPaymentHelper = BillPaymentHelper(balanceAmount: invoiceAmount, deductedAmount: invoiceAmount, invoiceId: invoiceId, userPackServiceId: packServiceId, canModify: false)
                         self.showBalanceRechargeAlert = true
                     } else {
-                        self.viewModel.billPaymentHelper = BillPaymentHelper(balanceAmount: invoiceAmount - userBalance, deductedAmount: userBalance, invoiceId: invoiceId, userPackServiceId: packServiceId)
+                        self.viewModel.billPaymentHelper = BillPaymentHelper(balanceAmount: invoiceAmount - userBalance, deductedAmount: userBalance, invoiceId: invoiceId, userPackServiceId: packServiceId, canModify: false)
                         self.presentationMode.wrappedValue.dismiss()
                         self.viewModel.paymentOptionsModalPublisher.send(true)
                     }

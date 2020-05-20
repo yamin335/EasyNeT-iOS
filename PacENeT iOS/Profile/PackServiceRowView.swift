@@ -56,7 +56,7 @@ struct PackServiceRowView: View {
                     .font(.body)
             }
             Spacer()
-            if item.isActive == true{
+            if item.packServiceTypeId == 1 {
                 changeButton
             }
         }

@@ -100,11 +100,11 @@ struct NewPackService: Codable {
     let packServiceType: String?
     let packServicePrice, packServiceInstallCharge, packServiceOthersCharge, actualPayAmount, payAmount, saveAmount: Double?
     let methodId: Int?
-    let isUpGrade, isDownGrade, isDefault: Bool?
+    let isUpGrade, isDownGrade: Bool?
     let expireDate, activeDate: String?
     let isNew, isUpdate, isDelete, enabled: Bool?
     let deductBalance: Double?
-    let isBalanceDeduct, isActive: Bool?
+    let isBalanceDeduct, isActive, isNoneStop: Bool?
 }
 
 // MARK: - PackUserInfo
@@ -112,6 +112,7 @@ struct PackUserInfo: Codable {
     let id, userId: Int?
     let values: String?
     let loggeduserId: Int?
+    let CDate: String?
 }
 
 // MARK: - NewPackageSave
@@ -156,11 +157,72 @@ struct PackageChangeConsumeData: Codable {
     let consumAmount, restAmount: Double?
     let restDays: Int?
     let isPossibleChange, isDue: Bool?
+    let message: String?
+    let todays: String?
 }
 
 struct PackageChangeHelper {
     let isUpgrade: Bool
     let requiredAmount: Double
+    let actualPayAmount: Double
+    let payAmount: Double
     let savedAmount: Double
     let deductedAmount: Double
+}
+
+struct ConnectionInfo: Codable {
+    let BalanceAmount: Double?
+    let DeductedAmount: Double?
+    let UserPackServiceId: Int?
+    let accountId: Int?
+    let profileId: Int?
+    let userName: String?
+}
+
+struct RechargeResdata: Codable {
+    let authToken: String?
+    let rechargeAmount: Double?
+    let deductedAmount: Double?
+    var Name: String = "sale"
+    let currency: String?
+    let mrcntNumber: String?
+    let canModify: Bool?
+}
+
+// MARK: - NewPackageSaveByBkash
+enum NewPackageSaveByBkash: Encodable {
+    case pacList(NewPackService)
+    case rechargeResdata(RechargeResdata)
+    case connectionInfo(ConnectionInfo)
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        switch self {
+        case .pacList(let x):
+            try container.encode(x)
+        case .rechargeResdata(let x):
+            try container.encode(x)
+        case .connectionInfo(let x):
+            try container.encode(x)
+        }
+    }
+}
+
+// MARK: - NewPackageSaveByFoster
+enum NewPackageSaveByFoster: Encodable {
+    case pacList(NewPackService)
+    case fosterData(FosterModel)
+    case connectionInfo(ConnectionInfo)
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        switch self {
+        case .pacList(let x):
+            try container.encode(x)
+        case .fosterData(let x):
+            try container.encode(x)
+        case .connectionInfo(let x):
+            try container.encode(x)
+        }
+    }
 }

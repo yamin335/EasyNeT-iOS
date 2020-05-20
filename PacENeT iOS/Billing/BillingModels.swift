@@ -190,10 +190,16 @@ struct BillPaymentHelper {
     let deductedAmount: Double
     let invoiceId : Int
     let userPackServiceId : Int
+    let canModify: Bool
 }
 
 // MARK: - FosterHelper
 struct FosterHelper {
     let fosterProcessUrl: String
     let fosterStatusUrl: String
+}
+
+struct BkashResData {
+    let tmodel: TModel?
+    let resBkash: String?
 }

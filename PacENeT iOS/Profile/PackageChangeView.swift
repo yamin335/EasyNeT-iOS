@@ -66,12 +66,13 @@ struct PackageChangeView: View {
         HStack {
             Spacer()
             Button(action: {
-                guard let payable = Double(self.payableAmount), let required = self.viewModel.packChangeHelper?.requiredAmount, payable == required else {
+                guard let payable = Double(self.payableAmount), payable > 0, let payAmount = self.viewModel.packChangeHelper?.payAmount, payable == payAmount else {
                     self.viewModel.warningToastPublisher.send((true, "Please enter required amount!!"))
                     return
                 }
                 
-                self.viewModel.warningToastPublisher.send((true, "Working on it"))
+                self.viewModel.dismissPackageChangeModal.send(true)
+                self.viewModel.paymentOptionsModalPublisher.send(true)
                 
             }) {
                 HStack {
@@ -108,7 +109,7 @@ struct PackageChangeView: View {
                     HStack(spacing: 10) {
                         Text("Required Amount:")
                             .foregroundColor(Colors.color2)
-                        Text("\(self.viewModel.packChangeHelper?.requiredAmount.rounded(toPlaces: 2) ?? "0.0") BDT")
+                        Text("\(self.viewModel.packChangeHelper?.payAmount.rounded(toPlaces: 2) ?? "0.0") BDT")
                             .fontWeight(.bold)
                             .foregroundColor(Colors.color2)
                     }
@@ -175,7 +176,11 @@ struct PackageChangeView: View {
                 return
             }
             
-            self.calculateRequiredAmount()
+            self.viewModel.changingUserPackService = self.changingUserPackService
+            self.viewModel.selectedPackService = self.selectedPackService
+            
+            self.calculateAmount()
+            
             guard let helper = self.viewModel.packChangeHelper else {
                 self.viewModel.errorToastPublisher.send((true, "Not possible at this moment, please try again later!"))
                 return
@@ -241,18 +246,18 @@ struct PackageChangeView: View {
                 .actionSheet(isPresented: $showingPopup) {
                     ActionSheet(
                         title: Text("Package Change Confirmation"),
-                        message: Text("Are you sure to migrate in package: \(selectedPackService.packServiceName ?? "Unknown")?"),
+                        message: Text("Are you sure to migrate in package: \(selectedPackService.packServiceName ?? "Unknown")? which will \(viewModel.packChangeHelper?.isUpgrade == true ? "cost" : "save"): \(viewModel.packChangeHelper?.isUpgrade == true ? viewModel.packChangeHelper?.requiredAmount.rounded(toPlaces: 2) ?? "0.0" : viewModel.packChangeHelper?.savedAmount.rounded(toPlaces: 2) ?? "0.0") BDT"),
                         buttons: [.default(Text("Yes Change")) {
                             
-                            if self.viewModel.consumeData?.isDue == true {
-                                self.viewModel.saveChangedPackService(selectedPackService: self.selectedPackService, changingUserPackService: self.changingUserPackService)
-                                self.presentationMode.wrappedValue.dismiss()
-                            } else if self.viewModel.consumeData?.isDue == false {
-                                
-                            }
+                            self.viewModel.saveChangedPackService(selectedPackService: self.selectedPackService, changingUserPackService: self.changingUserPackService)
                             
                             }, .cancel()])
                     
+                }
+                .onReceive(self.viewModel.dismissPackageChangeModal.receive(on: RunLoop.main)) { shouldDismiss in
+                    if shouldDismiss {
+                        self.presentationMode.wrappedValue.dismiss()
+                    }
                 }
                 .onReceive(self.viewModel.showLoader.receive(on: RunLoop.main)) { shouldShow in
                     self.showLoader = shouldShow
@@ -333,21 +338,40 @@ struct PackageChangeView: View {
         }.navigationViewStyle(StackNavigationViewStyle())
     }
     
-    func calculateRequiredAmount() {
+    func calculateAmount() {
         let newPackServicePrice = self.selectedPackService.packServicePrice ?? 0.0
         let newPackUnitPrice = newPackServicePrice/30
         let restDays = viewModel.consumeData?.restDays ?? 0
         let newPackPrice = newPackUnitPrice * Double(restDays)
         let restAmount = viewModel.consumeData?.restAmount ?? 0.0
         let requiredAmount = newPackPrice - restAmount
+        let requiredRounded = Double(requiredAmount.rounded(toPlaces: 2)) ?? 0
         if requiredAmount > 0 {
-            let tempReqAmount = Double(requiredAmount.rounded(toPlaces: 2)) ?? 0
-            self.viewModel.packChangeHelper = PackageChangeHelper(isUpgrade: true, requiredAmount: tempReqAmount, savedAmount: 0.0, deductedAmount: 0.0)
+            let balanceAmount = self.viewModel.userBalance?.balanceAmount ?? 0.0
+            var deductedAmount = 0.0
+            if balanceAmount > 0 && balanceAmount < requiredAmount {
+                deductedAmount = balanceAmount
+            } else if balanceAmount > requiredAmount {
+                deductedAmount = requiredAmount
+            }
+            
+            let deductRounded = Double(deductedAmount.rounded(toPlaces: 2)) ?? 0
+            
+            if self.viewModel.consumeData?.isDue == true {
+                let actualPayAmount = requiredAmount - deductRounded
+                let actualRounded = Double(actualPayAmount.rounded(toPlaces: 2)) ?? 0
+                self.viewModel.packChangeHelper = PackageChangeHelper(isUpgrade: true, requiredAmount: requiredRounded, actualPayAmount: actualRounded, payAmount: 0.0, savedAmount: 0.0, deductedAmount: deductRounded)
+            } else {
+                let payAmount = requiredAmount - deductRounded
+                let payRounded = Double(payAmount.rounded(toPlaces: 2)) ?? 0
+                self.viewModel.packChangeHelper = PackageChangeHelper(isUpgrade: true, requiredAmount: requiredRounded, actualPayAmount: payRounded, payAmount: payRounded, savedAmount: 0.0, deductedAmount: deductRounded)
+            }
+            
         } else if requiredAmount < 0 {
-            let tempSavedAmount = Double(abs(requiredAmount).rounded(toPlaces: 2)) ?? 0
-            self.viewModel.packChangeHelper = PackageChangeHelper(isUpgrade: false, requiredAmount: 0.0, savedAmount: tempSavedAmount, deductedAmount: 0.0)
+            let savedAmount = Double(abs(requiredAmount).rounded(toPlaces: 2)) ?? 0
+            self.viewModel.packChangeHelper = PackageChangeHelper(isUpgrade: false, requiredAmount: 0.0, actualPayAmount: 0.0, payAmount: 0.0, savedAmount: savedAmount, deductedAmount: 0.0)
         } else if requiredAmount == 0.0 {
-            self.viewModel.packChangeHelper = PackageChangeHelper(isUpgrade: false, requiredAmount: 0.0, savedAmount: 0.0, deductedAmount: 0.0)
+            self.viewModel.packChangeHelper = PackageChangeHelper(isUpgrade: false, requiredAmount: 0.0, actualPayAmount: 0.0, payAmount: 0.0, savedAmount: 0.0, deductedAmount: 0.0)
         }
     }
 }

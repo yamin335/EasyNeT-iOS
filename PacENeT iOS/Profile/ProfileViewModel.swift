@@ -17,23 +17,32 @@ class ProfileViewModel: ObservableObject {
     private var userPackServiceChangeSaveSubscriber: AnyCancellable? = nil
     private var userBalanceSubscriber: AnyCancellable? = nil
     private var packChangePayConsumeSubscriber: AnyCancellable? = nil
+    private var saveChangedPackByBkashSubscriber: AnyCancellable? = nil
+    private var saveChangedPackByFosterSubscriber: AnyCancellable? = nil
     
     var errorToastPublisher = PassthroughSubject<(Bool, String), Never>()
     var successToastPublisher = PassthroughSubject<(Bool, String), Never>()
     var warningToastPublisher = PassthroughSubject<(Bool, String), Never>()
-    
+    var dismissPackageChangeModal = PassthroughSubject<Bool, Never>()
+    var paymentOptionsModalPublisher = PassthroughSubject<Bool, Never>()
+    var showFosterWebViewPublisher = PassthroughSubject<Bool, Never>()
+    var showBkashWebViewPublisher = PassthroughSubject<Bool, Never>()
     var showLoader = PassthroughSubject<Bool, Never>()
     var objectHasChanged = PassthroughSubject<Bool, Never>()
     var showServiceChangeModal = PassthroughSubject<(Bool, UserPackService), Never>()
-    var packServices = [PackService]()
     var showPackageChangePayModalPublisher = PassthroughSubject<([PayMethod], PackageChangeConsumeData), Never>()
+    
+    var packServices = [PackService]()
     var packChangeHelper: PackageChangeHelper? = nil
     var payMethods: [PayMethod] = []
     var consumeData: PackageChangeConsumeData? = nil
+    var changingUserPackService: UserPackService? = nil
+    var selectedPackService: ChildPackService? = nil
     
     @Published var balance = ""
     @Published var due = ""
     
+    var userConnectionId = 0
     
     @Published var userBalance: UserBalance? {
         willSet {
@@ -67,6 +76,8 @@ class ProfileViewModel: ObservableObject {
         userPackServiceSubscriber?.cancel()
         userPackServiceChangeSaveSubscriber?.cancel()
         userBalanceSubscriber?.cancel()
+        saveChangedPackByBkashSubscriber?.cancel()
+        saveChangedPackByFosterSubscriber?.cancel()
     }
     
     // MARK: - getUserBalance()
@@ -195,10 +206,11 @@ class ProfileViewModel: ObservableObject {
                 }
             }, receiveValue: { response in
                 if response.count > 0 {
-                    guard let packServices = response[0].packList else {
+                    guard let packServices = response[0].packList, let connectionid = response[0].userConnectionId else {
                         return
                     }
                     self.userPackServices = packServices
+                    self.userConnectionId = connectionid
                 }
                 
             })
@@ -283,11 +295,12 @@ class ProfileViewModel: ObservableObject {
                 }
             }, receiveValue: { response in
                 if let resdata = response.resdata {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                        self.getUserPackServiceData()
-                    }
                     self.successToastPublisher.send((true, resdata.message ?? "Successfully changed!"))
-                    self.showLoader.send(true)
+                    self.dismissPackageChangeModal.send(true)
+                    self.userPackServices.removeAll()
+                    self.objectHasChanged.send(true)
+                    self.refreshUI()
+                    
                 } else {
                     self.errorToastPublisher.send((true, "Not successful, contact with support!"))
                 }
@@ -308,7 +321,7 @@ class ProfileViewModel: ObservableObject {
                                                             zoneId: changingUserPackService.zoneId,
                                                             accountId: changingUserPackService.accountId,
                                                             packServiceId: selectedPackService.packServiceId,
-                                                            packServiceName: selectedPackService.packServiceName,
+                                                            packServiceName: selectedPackService.isParent == false ? selectedPackService.packServiceName : "",
                                                             parentPackServiceId: selectedPackService.parentPackServiceId,
                                                             parentPackServiceName: selectedPackService.parentPackServiceName,
                                                             packServiceTypeId: selectedPackService.packServiceTypeId,
@@ -316,13 +329,12 @@ class ProfileViewModel: ObservableObject {
                                                             packServicePrice: selectedPackService.packServicePrice,
                                                             packServiceInstallCharge: changingUserPackService.packServiceInstallCharge,
                                                             packServiceOthersCharge: changingUserPackService.packServiceOthersCharge,
-                                                            actualPayAmount: helper.requiredAmount,
-                                                            payAmount: helper.requiredAmount,
+                                                            actualPayAmount: helper.actualPayAmount,
+                                                            payAmount: helper.payAmount,
                                                             saveAmount: helper.savedAmount,
                                                             methodId: changingUserPackService.methodId,
                                                             isUpGrade: helper.isUpgrade,
                                                             isDownGrade: !helper.isUpgrade,
-                                                            isDefault: changingUserPackService.isDefault,
                                                             expireDate: changingUserPackService.expireDate,
                                                             activeDate: changingUserPackService.activeDate,
                                                             isNew: false,
@@ -330,9 +342,14 @@ class ProfileViewModel: ObservableObject {
                                                             isDelete: false,
                                                             enabled: changingUserPackService.enabled,
                                                             deductBalance: helper.deductedAmount, isBalanceDeduct: helper.deductedAmount > 0.0 ? true : false,
-                                                            isActive: changingUserPackService.isActive)
+                                                            isActive: changingUserPackService.isActive, isNoneStop: consumeData?.isDue)
         
-        let packUserInfo: PackUserInfo = PackUserInfo(id: changingUserPackService.accountId, userId: changingUserPackService.userId, values: "\(changingUserPackService.packServiceName ?? ""), \(selectedPackService.packServiceName ?? "")", loggeduserId: UserLocalStorage.getLoggedUserData()?.userID)
+        let packUserInfo: PackUserInfo = PackUserInfo(id: userConnectionId,
+                                                      userId: changingUserPackService.ispUserId,
+                                                      values: "\(changingUserPackService.packServiceName ?? "")",
+                                                      loggeduserId: UserLocalStorage.getLoggedUserData()?.userID,
+                                                      CDate: self.consumeData?.todays
+        )
         
         let newPackageSaveList = [NewPackageSave.newPackServiceArray(newPackService), NewPackageSave.packUserInfo(packUserInfo)]
         
@@ -453,7 +470,7 @@ class ProfileViewModel: ObservableObject {
                 }
                 
                 let jsonString = try? JSONSerialization.jsonObject(with: data, options: .allowFragments) as? [String: Any]
-                print(jsonString ?? "Error in json parsing...")
+                //print(jsonString ?? "Error in json parsing...")
                 let tempString = jsonString?["resdata"] as? [String: String]
                 let tempAgain = tempString?["ispservices"]
                 guard let finalData = tempAgain?.data(using: .utf8) else {
@@ -567,7 +584,277 @@ class ProfileViewModel: ObservableObject {
             })
     }
     
+    // MARK: - saveChangedPackByBkash()
+    func saveChangedPackByBkash(bkashResData: BkashResData) {
+        self.saveChangedPackByBkashSubscriber = self.saveChangedPackByBkashApiCall(bkashResData: bkashResData)?
+            .sink(receiveCompletion: { completion in
+                switch completion {
+                    case .finished:
+                        break
+                    case .failure(let error):
+                        print(error.localizedDescription)
+                        self.errorToastPublisher.send((true, "Not successful, contact with support! -- \(error.localizedDescription)"))
+                }
+            }, receiveValue: { response in
+                if let resdata = response.resdata {
+                    self.successToastPublisher.send((true, resdata.message ?? "Successfully changed!"))
+                    self.userPackServices.removeAll()
+                    self.objectHasChanged.send(true)
+                    self.refreshUI()
+                    
+                } else {
+                    self.errorToastPublisher.send((true, "Not successful, contact with support!"))
+                }
+            })
+    }
+    
+    func saveChangedPackByBkashApiCall(bkashResData: BkashResData) -> AnyPublisher<DefaultResponse, Error>? {
+        
+        guard let helper = packChangeHelper, let changingUserPackService = self.changingUserPackService, let selectedPackService = self.selectedPackService else {
+            errorToastPublisher.send((true, "Not successful, contact with support!"))
+            return nil
+        }
+        
+        let packList: NewPackService = NewPackService(userPackServiceId: changingUserPackService.userPackServiceId,
+                                                            connectionNo: changingUserPackService.connectionNo,
+                                                            userId: changingUserPackService.userId,
+                                                            connectionTypeId: changingUserPackService.connectionTypeId,
+                                                            zoneId: changingUserPackService.zoneId,
+                                                            accountId: changingUserPackService.accountId,
+                                                            packServiceId: selectedPackService.packServiceId,
+                                                            packServiceName: selectedPackService.isParent == false ? selectedPackService.packServiceName : "",
+                                                            parentPackServiceId: selectedPackService.parentPackServiceId,
+                                                            parentPackServiceName: selectedPackService.parentPackServiceName,
+                                                            packServiceTypeId: selectedPackService.packServiceTypeId,
+                                                            packServiceType: selectedPackService.packServiceType,
+                                                            packServicePrice: selectedPackService.packServicePrice,
+                                                            packServiceInstallCharge: changingUserPackService.packServiceInstallCharge,
+                                                            packServiceOthersCharge: changingUserPackService.packServiceOthersCharge,
+                                                            actualPayAmount: helper.actualPayAmount,
+                                                            payAmount: helper.payAmount,
+                                                            saveAmount: helper.savedAmount,
+                                                            methodId: changingUserPackService.methodId,
+                                                            isUpGrade: helper.isUpgrade,
+                                                            isDownGrade: !helper.isUpgrade,
+                                                            expireDate: changingUserPackService.expireDate,
+                                                            activeDate: changingUserPackService.activeDate,
+                                                            isNew: false,
+                                                            isUpdate: true,
+                                                            isDelete: false,
+                                                            enabled: changingUserPackService.enabled,
+                                                            deductBalance: helper.deductedAmount,
+                                                            isBalanceDeduct: helper.deductedAmount > 0.0 ? true : false,
+                                                            isActive: changingUserPackService.isActive,
+                                                            isNoneStop: consumeData?.isDue)
+        
+        let connectionInfo = ConnectionInfo( BalanceAmount: helper.payAmount,
+                               DeductedAmount: helper.deductedAmount,
+                               UserPackServiceId: changingUserPackService.userPackServiceId,
+                               accountId: changingUserPackService.accountId,
+                               profileId: UserLocalStorage.getLoggedUserData()?.profileID,
+                               userName: UserLocalStorage.getLoggedUserData()?.userName)
+        
+        let rechargeResdata = RechargeResdata(authToken: bkashResData.tmodel?.idtoken,
+                               rechargeAmount: helper.payAmount,
+                               deductedAmount: helper.deductedAmount,
+                               Name: "sale",
+                               currency: bkashResData.tmodel?.currency,
+                               mrcntNumber: bkashResData.tmodel?.marchantInvNo,
+                               canModify: true)
+        
+        let newPackageSaveList = [NewPackageSaveByBkash.pacList(packList), NewPackageSaveByBkash.rechargeResdata(rechargeResdata), NewPackageSaveByBkash.connectionInfo(connectionInfo)]
+        
+        let jsonData = try? JSONEncoder().encode(newPackageSaveList)
+        
+        var jsonString: Any?
+        if let data = jsonData {
+            jsonString = try? JSONSerialization.jsonObject(with: data, options: .allowFragments)
+        }
+        print(jsonString ?? "Error in json parsing...")
+        
+        guard let urlComponents = URLComponents(string: NetworkApiService.webBaseUrl+"/api/ispuser/changepaybybkashpayment") else {
+            print("Problem in UrlComponent creation...")
+            return nil
+        }
+        
+        guard let url = urlComponents.url else {
+            return nil
+        }
+        
+        //Request type
+        var request = getCommonUrlRequest(url: url)
+        request.httpMethod = "POST"
+        
+        //Setting headers
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        //Setting body for POST request
+        request.httpBody = jsonData
+        
+        return URLSession.shared.dataTaskPublisher(for: request)
+            .handleEvents(receiveSubscription: { _ in
+                self.showLoader.send(true)
+            }, receiveOutput: { _ in
+                self.showLoader.send(false)
+            }, receiveCompletion: { _ in
+                self.showLoader.send(false)
+            }, receiveCancel: {
+                self.showLoader.send(false)
+            })
+            .tryMap { data, response -> Data in
+                guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+                    throw NetworkApiService.APIFailureCondition.InvalidServerResponse
+                }
+                
+                let string = String(data: data, encoding: .utf8)
+                print(string ?? "Undefined session data")
+                
+                return data
+        }
+        .retry(1)
+        .decode(type: DefaultResponse.self, decoder: JSONDecoder())
+        .receive(on: RunLoop.main)
+        .eraseToAnyPublisher()
+    }
+    
+    // MARK: - saveChangedPackByFoster()
+    func saveChangedPackByFoster(fosterModel: String) {
+        self.saveChangedPackByBkashSubscriber = self.saveChangedPackByFosterApiCall(fosterModel: fosterModel)?
+            .sink(receiveCompletion: { completion in
+                switch completion {
+                    case .finished:
+                        break
+                    case .failure(let error):
+                        print(error.localizedDescription)
+                        self.errorToastPublisher.send((true, "Not successful, contact with support! -- \(error.localizedDescription)"))
+                }
+            }, receiveValue: { response in
+                if let resdata = response.resdata {
+                    self.successToastPublisher.send((true, resdata.message ?? "Successfully changed!"))
+                    self.userPackServices.removeAll()
+                    self.objectHasChanged.send(true)
+                    self.refreshUI()
+                    
+                } else {
+                    self.errorToastPublisher.send((true, "Not successful, contact with support!"))
+                }
+            })
+    }
+    
+    func saveChangedPackByFosterApiCall(fosterModel: String) -> AnyPublisher<DefaultResponse, Error>? {
+        
+        guard let helper = packChangeHelper, let changingUserPackService = self.changingUserPackService, let selectedPackService = self.selectedPackService else {
+            errorToastPublisher.send((true, "Not successful, contact with support!"))
+            return nil
+        }
+        
+        let packList: NewPackService = NewPackService(userPackServiceId: changingUserPackService.userPackServiceId,
+                                                            connectionNo: changingUserPackService.connectionNo,
+                                                            userId: changingUserPackService.userId,
+                                                            connectionTypeId: changingUserPackService.connectionTypeId,
+                                                            zoneId: changingUserPackService.zoneId,
+                                                            accountId: changingUserPackService.accountId,
+                                                            packServiceId: selectedPackService.packServiceId,
+                                                            packServiceName: selectedPackService.isParent == false ? selectedPackService.packServiceName : "",
+                                                            parentPackServiceId: selectedPackService.parentPackServiceId,
+                                                            parentPackServiceName: selectedPackService.parentPackServiceName,
+                                                            packServiceTypeId: selectedPackService.packServiceTypeId,
+                                                            packServiceType: selectedPackService.packServiceType,
+                                                            packServicePrice: selectedPackService.packServicePrice,
+                                                            packServiceInstallCharge: changingUserPackService.packServiceInstallCharge,
+                                                            packServiceOthersCharge: changingUserPackService.packServiceOthersCharge,
+                                                            actualPayAmount: helper.actualPayAmount,
+                                                            payAmount: helper.payAmount,
+                                                            saveAmount: helper.savedAmount,
+                                                            methodId: changingUserPackService.methodId,
+                                                            isUpGrade: helper.isUpgrade,
+                                                            isDownGrade: !helper.isUpgrade,
+                                                            expireDate: changingUserPackService.expireDate,
+                                                            activeDate: changingUserPackService.activeDate,
+                                                            isNew: false,
+                                                            isUpdate: true,
+                                                            isDelete: false,
+                                                            enabled: changingUserPackService.enabled,
+                                                            deductBalance: helper.deductedAmount,
+                                                            isBalanceDeduct: helper.deductedAmount > 0.0 ? true : false,
+                                                            isActive: changingUserPackService.isActive,
+                                                            isNoneStop: consumeData?.isDue)
+        
+        let connectionInfo = ConnectionInfo( BalanceAmount: helper.payAmount,
+                               DeductedAmount: helper.deductedAmount,
+                               UserPackServiceId: changingUserPackService.userPackServiceId,
+                               accountId: changingUserPackService.accountId,
+                               profileId: UserLocalStorage.getLoggedUserData()?.profileID,
+                               userName: UserLocalStorage.getLoggedUserData()?.userName)
+        
+        let fosterData = Data(fosterModel.utf8)
+        guard let fosterResponseModelArray = try? JSONDecoder().decode([FosterModel].self, from: fosterData) else {
+            errorToastPublisher.send((true, "Not successful, contact with support!"))
+            return nil
+        }
+        guard fosterResponseModelArray.count > 0 else {
+            errorToastPublisher.send((true, "Not successful, contact with support!"))
+            return nil
+        }
+        let fosterResponseModel = fosterResponseModelArray[0]
+        
+        let newPackageSaveList = [NewPackageSaveByFoster.pacList(packList), NewPackageSaveByFoster.fosterData(fosterResponseModel), NewPackageSaveByFoster.connectionInfo(connectionInfo)]
+        
+        let jsonData = try? JSONEncoder().encode(newPackageSaveList)
+        
+        var jsonString: Any?
+        if let data = jsonData {
+            jsonString = try? JSONSerialization.jsonObject(with: data, options: .allowFragments)
+        }
+        print(jsonString ?? "Error in json parsing...")
+        
+        guard let urlComponents = URLComponents(string: NetworkApiService.webBaseUrl+"/api/ispuser/changepaybyfoster") else {
+            print("Problem in UrlComponent creation...")
+            return nil
+        }
+        
+        guard let url = urlComponents.url else {
+            return nil
+        }
+        
+        //Request type
+        var request = getCommonUrlRequest(url: url)
+        request.httpMethod = "POST"
+        
+        //Setting headers
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        //Setting body for POST request
+        request.httpBody = jsonData
+        
+        return URLSession.shared.dataTaskPublisher(for: request)
+            .handleEvents(receiveSubscription: { _ in
+                self.showLoader.send(true)
+            }, receiveOutput: { _ in
+                self.showLoader.send(false)
+            }, receiveCompletion: { _ in
+                self.showLoader.send(false)
+            }, receiveCancel: {
+                self.showLoader.send(false)
+            })
+            .tryMap { data, response -> Data in
+                guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+                    throw NetworkApiService.APIFailureCondition.InvalidServerResponse
+                }
+                
+                let string = String(data: data, encoding: .utf8)
+                print(string ?? "Undefined session data")
+                
+                return data
+        }
+        .retry(1)
+        .decode(type: DefaultResponse.self, decoder: JSONDecoder())
+        .receive(on: RunLoop.main)
+        .eraseToAnyPublisher()
+    }
+    
     func refreshUI() {
+        getUserBalance()
         getUserPackServiceData()
         getPackServiceData()
     }
