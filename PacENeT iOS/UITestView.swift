@@ -88,7 +88,7 @@ struct UITestView: View {
                 }
                 
                 Text("Price:  900.00 BDT").foregroundColor(.gray)
-                Text("Active:  9-2-2020  to  9-3-2020").foregroundColor(.gray)
+                Text("Active:  9-2-2020  to  9-3-2020").foregroundColor(.gray).font(.caption)
             }
             Spacer()
             changeButton

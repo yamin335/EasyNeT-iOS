@@ -9,14 +9,22 @@
 import SwiftUI
 
 struct ParticularRow: View {
-    @State var name: String
-    @State var price: Double
+    @State var item: InvoiceDetail
     var body: some View {
         HStack {
-            Text(name)
-            Spacer()
-            Text("\(price.rounded(toPlaces: 2)) BDT")
-        }
+            VStack(alignment: .leading) {
+                Text(item.packageName ?? "Unknown")
+                Text("Date: \(item.srvStartDate ?? "N/A")")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+            }
+            VStack(spacing: 0) {
+                Text("").font(.system(size: 0))
+                Divider().padding(.leading, 5).padding(.trailing, 5)
+                Text("").font(.system(size: 0))
+            }
+            Text("\(item.packagePrice?.rounded(toPlaces: 2) ?? "0.0") BDT")
+        }.padding(.bottom, 10)
     }
 }
 
@@ -120,8 +128,8 @@ struct InvoiceDetailView: View {
                 Divider()
                 
                 VStack {
-                    ForEach(self.viewModel.invoiceDetailList, id: \.packageId) { item in
-                        ParticularRow(name: item.packageName ?? "N/A", price: item.packagePrice ?? 0.0)
+                    ForEach(self.viewModel.invoiceDetailList, id: \.id) { item in
+                        ParticularRow(item: item)
                     }
                 }.padding(.bottom, 24)
                 

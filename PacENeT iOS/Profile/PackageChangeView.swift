@@ -186,11 +186,17 @@ struct PackageChangeView: View {
                 return
             }
             
+            print(" ------ Calculation ------ \n IsUpgrade: \(helper.isUpgrade ? "YES" : "NO") \n Required Amount: \(helper.requiredAmount) \n Actual Payment: \(helper.actualPayAmount) \n Pay Amount: \(helper.payAmount) \n Saved Amount: \(helper.savedAmount) \n Deducted Amount: \(helper.deductedAmount) \n ------ End ------ \n")
+            
             if self.viewModel.consumeData?.isDue == true {
                 self.showingPopup.toggle()
             } else if self.viewModel.consumeData?.isDue == false {
                 if helper.isUpgrade {
-                    self.showPaymentOptionsModal = true
+                    if helper.payAmount > 0.0 {
+                        self.showPaymentOptionsModal = true
+                    } else {
+                        self.showingPopup.toggle()
+                    }
                 } else {
                     self.showingPopup.toggle()
                     print("Saved amount: \(helper.savedAmount)")
@@ -217,12 +223,28 @@ struct PackageChangeView: View {
         self._selectedPackService = State(initialValue: childPackService)
     }
     
+    struct PackageChangeRow: View {
+        @State var item: ChildPackService
+        var body: some View {
+            HStack {
+                VStack(alignment: .leading) {
+                    Text("\(item.packServiceName ?? "Unknown")")
+                        .fontWeight(.bold)
+                        .foregroundColor(Colors.color2)
+                    Text("Price: \(item.packServicePrice?.rounded(toPlaces: 2) ?? "0.0") BDT")
+                        .foregroundColor(.gray)
+                }
+                Spacer()
+            }.frame(minWidth: 0, maxWidth: .infinity)
+        }
+    }
+    
     var body: some View {
         NavigationView {
             ZStack {
                 VStack {
                     List(self.viewModel.choosingPackServiceOptions, id: \.packServiceId) { dataItem in
-                        Text("\(dataItem.packServiceName ?? "Unknown") -- Price: \(dataItem.packServicePrice ?? 0.0) BDT")
+                        PackageChangeRow(item: dataItem)
                             .onTapGesture {
                                 print("\(dataItem.packServiceName ?? "Unknown") -- Price: \(dataItem.packServicePrice ?? 0.0) BDT -- ID: \(dataItem.packServiceId ?? 0)")
                                 self.selectedPackService = dataItem
@@ -230,17 +252,22 @@ struct PackageChangeView: View {
                         }
                     }
                     Divider()
-                    Text("Selected Service").font(.title).padding(.bottom, 10)
+                    Text("Selected Service").font(.title).fontWeight(.heavy).padding(.bottom, 10)
                     HStack {
-                        Text("\(selectedPackService.packServiceName ?? "Unknown") -- Price: \(selectedPackService.packServicePrice ?? 0.0) BDT")
-                            .font(.headline)
-                            .foregroundColor(Colors.greenTheme)
-                            .padding(.bottom, 60)
-                            .padding(.trailing, 20)
-                            .padding(.leading, 24)
-                        
+                        VStack(alignment: .leading) {
+                            Text("\(selectedPackService.packServiceName ?? "Unknown")")
+                                .font(.title)
+                                .foregroundColor(Colors.greenTheme)
+                                
+                            Text("Price: \(selectedPackService.packServicePrice?.rounded(toPlaces: 2) ?? "0.0") BDT")
+                                .foregroundColor(.gray)
+                        }
                         Spacer()
                     }
+                    .padding(.bottom, 60)
+                    .padding(.trailing, 20)
+                    .padding(.leading, 24)
+                    
                     Spacer()
                 }
                 .actionSheet(isPresented: $showingPopup) {
@@ -339,11 +366,11 @@ struct PackageChangeView: View {
     }
     
     func calculateAmount() {
-        let newPackServicePrice = self.selectedPackService.packServicePrice ?? 0.0
+        guard let restDays = viewModel.consumeData?.restDays, let newPackServicePrice = self.selectedPackService.packServicePrice, let restAmount = viewModel.consumeData?.restAmount else {
+            return
+        }
         let newPackUnitPrice = newPackServicePrice/30
-        let restDays = viewModel.consumeData?.restDays ?? 0
         let newPackPrice = newPackUnitPrice * Double(restDays)
-        let restAmount = viewModel.consumeData?.restAmount ?? 0.0
         let requiredAmount = newPackPrice - restAmount
         let requiredRounded = Double(requiredAmount.rounded(toPlaces: 2)) ?? 0
         if requiredAmount > 0 {
@@ -355,15 +382,15 @@ struct PackageChangeView: View {
                 deductedAmount = requiredAmount
             }
             
-            let deductRounded = Double(deductedAmount.rounded(toPlaces: 2)) ?? 0
+            let deductRounded = Double(abs(deductedAmount).rounded(toPlaces: 2)) ?? 0
             
             if self.viewModel.consumeData?.isDue == true {
                 let actualPayAmount = requiredAmount - deductRounded
-                let actualRounded = Double(actualPayAmount.rounded(toPlaces: 2)) ?? 0
+                let actualRounded = Double(abs(actualPayAmount).rounded(toPlaces: 2)) ?? 0
                 self.viewModel.packChangeHelper = PackageChangeHelper(isUpgrade: true, requiredAmount: requiredRounded, actualPayAmount: actualRounded, payAmount: 0.0, savedAmount: 0.0, deductedAmount: deductRounded)
             } else {
                 let payAmount = requiredAmount - deductRounded
-                let payRounded = Double(payAmount.rounded(toPlaces: 2)) ?? 0
+                let payRounded = Double(abs(payAmount).rounded(toPlaces: 2)) ?? 0
                 self.viewModel.packChangeHelper = PackageChangeHelper(isUpgrade: true, requiredAmount: requiredRounded, actualPayAmount: payRounded, payAmount: payRounded, savedAmount: 0.0, deductedAmount: deductRounded)
             }
             

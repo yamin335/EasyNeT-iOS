@@ -11,7 +11,7 @@ import Combine
 
 final class UserData: ObservableObject  {
     @Published var selectedTabItem = 0
-    @Published var isLoggedIn = true
+    @Published var isLoggedIn = false
     @Published var shouldShowSplash = true
     var successToastPublisher = PassthroughSubject<(Bool, String), Never>()
 }

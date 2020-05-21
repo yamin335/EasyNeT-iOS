@@ -319,7 +319,7 @@ class ProfileViewModel: ObservableObject {
                                                             userId: changingUserPackService.userId,
                                                             connectionTypeId: changingUserPackService.connectionTypeId,
                                                             zoneId: changingUserPackService.zoneId,
-                                                            accountId: changingUserPackService.accountId,
+                                                            accountId: changingUserPackService.accountId, contactId: 0, packId: 0,
                                                             packServiceId: selectedPackService.packServiceId,
                                                             packServiceName: selectedPackService.isParent == false ? selectedPackService.packServiceName : "",
                                                             parentPackServiceId: selectedPackService.parentPackServiceId,
@@ -341,8 +341,11 @@ class ProfileViewModel: ObservableObject {
                                                             isUpdate: true,
                                                             isDelete: false,
                                                             enabled: changingUserPackService.enabled,
-                                                            deductBalance: helper.deductedAmount, isBalanceDeduct: helper.deductedAmount > 0.0 ? true : false,
-                                                            isActive: changingUserPackService.isActive, isNoneStop: consumeData?.isDue)
+                                                            deductBalance: helper.deductedAmount,
+                                                            isBalanceDeduct: helper.deductedAmount > 0.0 ? true : false,
+                                                            isActive: changingUserPackService.isActive,
+                                                            isNoneStop: consumeData?.isDue,
+                                                            isDefault: changingUserPackService.isDefault)
         
         let packUserInfo: PackUserInfo = PackUserInfo(id: userConnectionId,
                                                       userId: changingUserPackService.ispUserId,
@@ -359,7 +362,7 @@ class ProfileViewModel: ObservableObject {
         if let data = jsonData { jsonString = try? JSONSerialization.jsonObject(with: data, options: .allowFragments) }
         print(jsonString ?? "Error in json parsing...")
         
-        guard let urlComponents = URLComponents(string: NetworkApiService.webBaseUrl+"/api/ispuser/saveupdatesingleuserpackserivce") else {
+        guard let urlComponents = URLComponents(string: NetworkApiService.webBaseUrl+"/api/ispportal/saveupdatesingleuserpackserivce") else {
             print("Problem in UrlComponent creation...")
             return nil
         }
@@ -581,6 +584,7 @@ class ProfileViewModel: ObservableObject {
                     return
                 }
                 self.showPackageChangePayModalPublisher.send((payMethods, consumeData))
+                print("Consume Amount: \(consumeData.consumAmount ?? 0.0), Rest Amount: \(consumeData.restAmount ?? 0.0), Rest Days: \(consumeData.restDays ?? 0), IsPossibleChange: \(consumeData.isPossibleChange ?? false), IsDue: \(consumeData.isDue ?? false), Todays: \(consumeData.todays ?? "N/A")")
             })
     }
     
@@ -610,7 +614,10 @@ class ProfileViewModel: ObservableObject {
     
     func saveChangedPackByBkashApiCall(bkashResData: BkashResData) -> AnyPublisher<DefaultResponse, Error>? {
         
-        guard let helper = packChangeHelper, let changingUserPackService = self.changingUserPackService, let selectedPackService = self.selectedPackService else {
+        guard let helper = packChangeHelper,
+            let changingUserPackService = self.changingUserPackService,
+            let selectedPackService = self.selectedPackService,
+            let resBkashString = bkashResData.resBkash else {
             errorToastPublisher.send((true, "Not successful, contact with support!"))
             return nil
         }
@@ -620,7 +627,7 @@ class ProfileViewModel: ObservableObject {
                                                             userId: changingUserPackService.userId,
                                                             connectionTypeId: changingUserPackService.connectionTypeId,
                                                             zoneId: changingUserPackService.zoneId,
-                                                            accountId: changingUserPackService.accountId,
+                                                            accountId: changingUserPackService.accountId, contactId: nil, packId: nil,
                                                             packServiceId: selectedPackService.packServiceId,
                                                             packServiceName: selectedPackService.isParent == false ? selectedPackService.packServiceName : "",
                                                             parentPackServiceId: selectedPackService.parentPackServiceId,
@@ -645,24 +652,35 @@ class ProfileViewModel: ObservableObject {
                                                             deductBalance: helper.deductedAmount,
                                                             isBalanceDeduct: helper.deductedAmount > 0.0 ? true : false,
                                                             isActive: changingUserPackService.isActive,
-                                                            isNoneStop: consumeData?.isDue)
+                                                            isNoneStop: consumeData?.isDue,
+                                                            isDefault: changingUserPackService.isDefault)
         
-        let connectionInfo = ConnectionInfo( BalanceAmount: helper.payAmount,
-                               DeductedAmount: helper.deductedAmount,
-                               UserPackServiceId: changingUserPackService.userPackServiceId,
-                               accountId: changingUserPackService.accountId,
-                               profileId: UserLocalStorage.getLoggedUserData()?.profileID,
-                               userName: UserLocalStorage.getLoggedUserData()?.userName)
+        let resBkashData = Data(resBkashString.utf8)
+        guard var resBkashJsonObject = try? JSONSerialization.jsonObject(with: resBkashData, options: .allowFragments) as? [String: Any] else {
+            errorToastPublisher.send((true, "Not successful, contact with support!"))
+            return nil
+        }
+        resBkashJsonObject["isSuccess"] = true
         
-        let rechargeResdata = RechargeResdata(authToken: bkashResData.tmodel?.idtoken,
-                               rechargeAmount: helper.payAmount,
-                               deductedAmount: helper.deductedAmount,
-                               Name: "sale",
-                               currency: bkashResData.tmodel?.currency,
-                               mrcntNumber: bkashResData.tmodel?.marchantInvNo,
-                               canModify: true)
+        guard let resBkashJsonData = try? JSONSerialization.data(withJSONObject: resBkashJsonObject, options: []) else {
+            errorToastPublisher.send((true, "Not successful, contact with support!"))
+            return nil
+        }
         
-        let newPackageSaveList = [NewPackageSaveByBkash.pacList(packList), NewPackageSaveByBkash.rechargeResdata(rechargeResdata), NewPackageSaveByBkash.connectionInfo(connectionInfo)]
+        guard let resBkash = try? JSONDecoder().decode(ResBkash.self, from: resBkashJsonData) else {
+            errorToastPublisher.send((true, "Not successful, contact with support!"))
+            return nil
+        }
+        
+        let packUserInfo: PackUserInfo = PackUserInfo(id: userConnectionId,
+                                                      userId: changingUserPackService.ispUserId,
+                                                      values: "\(changingUserPackService.packServiceName ?? "")",
+                                                      loggeduserId: UserLocalStorage.getLoggedUserData()?.userID,
+                                                      CDate: self.consumeData?.todays)
+        
+        let newPackageSaveList = [NewPackageSaveByBkash.pacList(packList),
+                                  NewPackageSaveByBkash.resBkash(resBkash),
+                                  NewPackageSaveByBkash.packUserInfo(packUserInfo)]
         
         let jsonData = try? JSONEncoder().encode(newPackageSaveList)
         
@@ -672,7 +690,7 @@ class ProfileViewModel: ObservableObject {
         }
         print(jsonString ?? "Error in json parsing...")
         
-        guard let urlComponents = URLComponents(string: NetworkApiService.webBaseUrl+"/api/ispuser/changepaybybkashpayment") else {
+        guard let urlComponents = URLComponents(string: NetworkApiService.webBaseUrl+"/api/ispportal/changepaybybkashpayment") else {
             print("Problem in UrlComponent creation...")
             return nil
         }
@@ -753,7 +771,7 @@ class ProfileViewModel: ObservableObject {
                                                             userId: changingUserPackService.userId,
                                                             connectionTypeId: changingUserPackService.connectionTypeId,
                                                             zoneId: changingUserPackService.zoneId,
-                                                            accountId: changingUserPackService.accountId,
+                                                            accountId: changingUserPackService.accountId, contactId: 0, packId: 0,
                                                             packServiceId: selectedPackService.packServiceId,
                                                             packServiceName: selectedPackService.isParent == false ? selectedPackService.packServiceName : "",
                                                             parentPackServiceId: selectedPackService.parentPackServiceId,
@@ -778,14 +796,14 @@ class ProfileViewModel: ObservableObject {
                                                             deductBalance: helper.deductedAmount,
                                                             isBalanceDeduct: helper.deductedAmount > 0.0 ? true : false,
                                                             isActive: changingUserPackService.isActive,
-                                                            isNoneStop: consumeData?.isDue)
+                                                            isNoneStop: consumeData?.isDue,
+                                                            isDefault: changingUserPackService.isDefault)
         
-        let connectionInfo = ConnectionInfo( BalanceAmount: helper.payAmount,
-                               DeductedAmount: helper.deductedAmount,
-                               UserPackServiceId: changingUserPackService.userPackServiceId,
-                               accountId: changingUserPackService.accountId,
-                               profileId: UserLocalStorage.getLoggedUserData()?.profileID,
-                               userName: UserLocalStorage.getLoggedUserData()?.userName)
+        let packUserInfo: PackUserInfo = PackUserInfo(id: userConnectionId,
+                                                      userId: changingUserPackService.ispUserId,
+                                                      values: "\(changingUserPackService.packServiceName ?? "")",
+                                                      loggeduserId: UserLocalStorage.getLoggedUserData()?.userID,
+                                                      CDate: self.consumeData?.todays)
         
         let fosterData = Data(fosterModel.utf8)
         guard let fosterResponseModelArray = try? JSONDecoder().decode([FosterModel].self, from: fosterData) else {
@@ -798,7 +816,9 @@ class ProfileViewModel: ObservableObject {
         }
         let fosterResponseModel = fosterResponseModelArray[0]
         
-        let newPackageSaveList = [NewPackageSaveByFoster.pacList(packList), NewPackageSaveByFoster.fosterData(fosterResponseModel), NewPackageSaveByFoster.connectionInfo(connectionInfo)]
+        let newPackageSaveList = [NewPackageSaveByFoster.pacList(packList),
+                                  NewPackageSaveByFoster.fosterData(fosterResponseModel),
+                                  NewPackageSaveByFoster.packUserInfo(packUserInfo)]
         
         let jsonData = try? JSONEncoder().encode(newPackageSaveList)
         
@@ -808,7 +828,7 @@ class ProfileViewModel: ObservableObject {
         }
         print(jsonString ?? "Error in json parsing...")
         
-        guard let urlComponents = URLComponents(string: NetworkApiService.webBaseUrl+"/api/ispuser/changepaybyfoster") else {
+        guard let urlComponents = URLComponents(string: NetworkApiService.webBaseUrl+"/api/ispportal/changepaybyfoster") else {
             print("Problem in UrlComponent creation...")
             return nil
         }

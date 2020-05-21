@@ -92,7 +92,7 @@ struct ChildPackService: Codable {
 // MARK: - NewPackService
 struct NewPackService: Codable {
     let userPackServiceId, connectionNo, userId, connectionTypeId: Int?
-    let zoneId, accountId, packServiceId: Int?
+    let zoneId, accountId, contactId, packId, packServiceId: Int?
     let packServiceName: String?
     let parentPackServiceId: Int?
     let parentPackServiceName: String?
@@ -104,7 +104,7 @@ struct NewPackService: Codable {
     let expireDate, activeDate: String?
     let isNew, isUpdate, isDelete, enabled: Bool?
     let deductBalance: Double?
-    let isBalanceDeduct, isActive, isNoneStop: Bool?
+    let isBalanceDeduct, isActive, isNoneStop, isDefault: Bool?
 }
 
 // MARK: - PackUserInfo
@@ -179,30 +179,33 @@ struct ConnectionInfo: Codable {
     let userName: String?
 }
 
-struct RechargeResdata: Codable {
-    let authToken: String?
-    let rechargeAmount: Double?
-    let deductedAmount: Double?
-    var Name: String = "sale"
+struct ResBkash: Codable {
+    let paymentID: String?
+    let createTime: String?
+    let updateTime: String?
+    var trxID: String?
+    let transactionStatus: String?
+    let amount: String?
     let currency: String?
-    let mrcntNumber: String?
-    let canModify: Bool?
+    let intent: String?
+    let merchantInvoiceNumber: String?
+    let isSuccess: Bool?
 }
 
 // MARK: - NewPackageSaveByBkash
 enum NewPackageSaveByBkash: Encodable {
     case pacList(NewPackService)
-    case rechargeResdata(RechargeResdata)
-    case connectionInfo(ConnectionInfo)
+    case resBkash(ResBkash)
+    case packUserInfo(PackUserInfo)
     
     func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
         switch self {
         case .pacList(let x):
             try container.encode(x)
-        case .rechargeResdata(let x):
+        case .resBkash(let x):
             try container.encode(x)
-        case .connectionInfo(let x):
+        case .packUserInfo(let x):
             try container.encode(x)
         }
     }
@@ -212,7 +215,7 @@ enum NewPackageSaveByBkash: Encodable {
 enum NewPackageSaveByFoster: Encodable {
     case pacList(NewPackService)
     case fosterData(FosterModel)
-    case connectionInfo(ConnectionInfo)
+    case packUserInfo(PackUserInfo)
     
     func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
@@ -221,7 +224,7 @@ enum NewPackageSaveByFoster: Encodable {
             try container.encode(x)
         case .fosterData(let x):
             try container.encode(x)
-        case .connectionInfo(let x):
+        case .packUserInfo(let x):
             try container.encode(x)
         }
     }

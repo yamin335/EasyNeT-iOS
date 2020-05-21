@@ -139,9 +139,15 @@ struct InvoiceDetailResdata : Codable {
 
 // MARK: - InvoiceDetail
 struct InvoiceDetail: Codable {
+    let id = UUID()
     let packageId: Int?
     let packageName: String?
     let packagePrice: Double?
+    let srvStartDate: String?
+    let srvEndDate: String?
+    let isFirstInv: Bool?
+    let installCharge: Double?
+    let othersCharge: Double?
 }
 
 // MARK: - PayHistResponse

@@ -33,11 +33,11 @@ struct BkashPGW: UIViewRepresentable, BkashPGWDelegates {
     }
     
     func finishPayment() {
+        viewModel.bkashPaymentStatusPublisher.send((true, BkashResData(tmodel: viewModel.bkashTokenModel, resBkash: viewModel.resExecuteBk)))
         viewModel.bkashTokenModel = nil
         viewModel.billPaymentHelper = nil
         viewModel.showPGW.send((false, .BKASH))
         viewModel.showLoader.send(false)
-        viewModel.bkashPaymentStatusPublisher.send((true, BkashResData(tmodel: viewModel.bkashTokenModel, resBkash: viewModel.resExecuteBk)))
     }
     
     func cancelPayment() {
