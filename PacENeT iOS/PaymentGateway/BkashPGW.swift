@@ -224,6 +224,8 @@ struct BkashPGW: UIViewRepresentable, BkashPGWDelegates {
                     webView.goForward()
                 } else if navigation == "Back" && !webView.canGoBack {
                     self.delegate?.cancelPayment()
+                } else {
+                    self.delegate?.cancelPayment()
                 }
             })
         }

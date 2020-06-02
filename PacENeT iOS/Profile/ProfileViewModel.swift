@@ -171,7 +171,9 @@ class ProfileViewModel: ObservableObject {
     func preparePackageChangeSheetData(changingUserPackService: UserPackService) {
         existedServices.removeAll()
         for service in userPackServices {
-            existedServices.append(service.packServiceId ?? 0)
+            if service.isActive ?? false {
+                existedServices.append(service.packServiceId ?? 0)
+            }
         }
         
         for service in packServices {

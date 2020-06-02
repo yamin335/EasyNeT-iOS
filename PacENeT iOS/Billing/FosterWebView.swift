@@ -100,6 +100,8 @@ struct FosterWebView: UIViewRepresentable, FosterWebViewHandlerDelegate {
                         parent.viewModel.checkFosterStatus()
                     } else if response[0] == "paymentStatus" && response[1] == "false" {
                         delegate?.cancelPayment()
+                    } else {
+                        delegate?.cancelPayment()
                     }
 
                     decisionHandler(.cancel)

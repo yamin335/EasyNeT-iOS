@@ -239,6 +239,8 @@ struct BKashWebView: UIViewRepresentable, BkashWebViewHandlerDelegate {
                     webView.goForward()
                 } else if navigation == "Back" && !webView.canGoBack {
                     self.delegate?.cancelPayment()
+                } else {
+                    self.delegate?.cancelPayment()
                 }
             })
         }
