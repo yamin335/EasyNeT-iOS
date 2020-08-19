@@ -369,7 +369,7 @@ struct PackageChangeView: View {
         guard let restDays = viewModel.consumeData?.restDays, let newPackServicePrice = self.selectedPackService.packServicePrice, let restAmount = viewModel.consumeData?.restAmount else {
             return
         }
-        let newPackUnitPrice = newPackServicePrice/30
+        let newPackUnitPrice = newPackServicePrice / 30
         let newPackPrice = newPackUnitPrice * Double(restDays)
         let requiredAmount = newPackPrice - restAmount
         let requiredRounded = Double(requiredAmount.rounded(toPlaces: 2)) ?? 0

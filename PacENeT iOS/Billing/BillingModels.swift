@@ -116,7 +116,7 @@ struct InvoiceResdata : Codable {
 
 // MARK: - Invoice
 struct Invoice: Codable {
-    let ispInvoiceId, ispUserID, userPackServiceId: Int?
+    let ispInvoiceParentId, ispUserID: Int?
     let fullName, emailAddr, address, phoneNumber: String?
     let userCode, invoiceNo, genMonth, invoiceDate: String?
     let invoiceTotal, taxAmount, discountAmount, dueAmount: Double?
@@ -139,7 +139,8 @@ struct InvoiceDetailResdata : Codable {
 
 // MARK: - InvoiceDetail
 struct InvoiceDetail: Codable {
-    let id = UUID()
+    let UserPackServiceChangeID, ISPInvoiceID: Int?
+    let isChanged:Bool?
     let packageId: Int?
     let packageName: String?
     let packagePrice: Double?
@@ -148,6 +149,30 @@ struct InvoiceDetail: Codable {
     let isFirstInv: Bool?
     let installCharge: Double?
     let othersCharge: Double?
+}
+
+// MARK: - ChildInvoiceResponse
+struct ChildInvoiceResponse : Codable {
+    let resdata: ChildInvoiceResdata?
+}
+
+// MARK: - ChildInvoiceResdata
+struct ChildInvoiceResdata : Codable {
+    let userChildInvoiceDetail: String?
+}
+
+// MARK: - ChildInvoice
+struct ChildInvoice: Codable {
+    let id = UUID()
+    let ispInvoiceParentId, ispInvoiceId, ispUserID, userPackServiceId: Int?
+    let packageId: Int?
+    let packageName, fullName, emailAddr, address: String?
+    let phoneNumber, userCode, invoiceNo, genMonth: String?
+    let invoiceDate: String?
+    let invoiceTotal, taxAmount, discountAmount, dueAmount: Double?
+    let grandTotal: Double?
+    let isPaid: Bool?
+    let fromDate, toDate, createDate, dueAmountInWord: String?
 }
 
 // MARK: - PayHistResponse
@@ -197,6 +222,7 @@ struct BillPaymentHelper {
     let invoiceId : Int
     let userPackServiceId : Int
     let canModify: Bool
+    let isChildInvoice: Bool
 }
 
 // MARK: - FosterHelper

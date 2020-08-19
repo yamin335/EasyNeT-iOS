@@ -16,8 +16,10 @@ struct SplashScreen: View {
             Spacer()
             HStack(alignment: .center) {
                 Spacer()
-                Image("pace_net")
+                Image("pacenet_white")
                     .resizable()
+                    .scaledToFit()
+                    .aspectRatio(contentMode: .fit)
                     .frame(width: 150, height: 150)
                     .opacity(imageAlpha)
                     .onAppear(){
@@ -31,7 +33,7 @@ struct SplashScreen: View {
             }
             Spacer()
         }
-        .background(Color.white)
+        .background(Image("splash_background").resizable().scaledToFill())
         .edgesIgnoringSafeArea(.all)
     }
 }

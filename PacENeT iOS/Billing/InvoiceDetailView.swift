@@ -8,22 +8,77 @@
 
 import SwiftUI
 
+protocol ChildInvoicePayCallback {
+    func onPayClicked()
+}
+
 struct ParticularRow: View {
-    @State var item: InvoiceDetail
+    @State var item: ChildInvoice
+    @ObservedObject var viewModel: BillingViewModel
+    let delegate: ChildInvoicePayCallback
+    @State private var showBalanceRechargeAlert = false
+    
+    // MARK: - payButton
+    var payButton: some View {
+        Text("Pay Now")
+            .font(.system(size: 14))
+            .font(.body)
+            .onTapGesture {
+                print("Working...")
+                let userBalance = self.viewModel.userBalance?.balanceAmount ?? 0.0
+                
+                guard let invoiceAmount = self.item.dueAmount,
+                    let invoiceId = self.item.ispInvoiceId else {
+                    return
+                }
+                
+                if invoiceAmount > 0.0 {
+                    if userBalance >= invoiceAmount {
+                        self.viewModel.billPaymentHelper = BillPaymentHelper(balanceAmount: invoiceAmount, deductedAmount: invoiceAmount, invoiceId: invoiceId, userPackServiceId: 0, canModify: false, isChildInvoice: true)
+                        self.showBalanceRechargeAlert = true
+                    } else {
+                        self.viewModel.billPaymentHelper = BillPaymentHelper(balanceAmount: invoiceAmount - userBalance, deductedAmount: userBalance, invoiceId: invoiceId, userPackServiceId: 0, canModify: false, isChildInvoice: true)
+                        self.delegate.onPayClicked()
+                        self.viewModel.paymentOptionsModalPublisher.send(true)
+                    }
+                } else {
+                    self.viewModel.errorToastPublisher.send((true, "Amount must be greater than 0.0 BDT"))
+                }
+            }.foregroundColor(Colors.color7)
+            .padding(.trailing, 10)
+            .padding(.leading, 10)
+            .padding(.top, 4)
+            .padding(.bottom, 4)
+            .overlay (
+                RoundedRectangle(cornerRadius: 4, style: .circular)
+                    .stroke(Color.gray, lineWidth: 0.5)
+            )
+            .alert(isPresented:$showBalanceRechargeAlert) {
+            Alert(title: Text("Confirm Recharge"), message: Text("Are you sure to pay from your balance?"), primaryButton: .destructive(Text("Yes")) {
+                self.delegate.onPayClicked()
+                self.viewModel.payFromBalance()
+                }, secondaryButton: .cancel(Text("No")))
+        }
+    }
+    
     var body: some View {
         HStack {
             VStack(alignment: .leading) {
-                Text(item.packageName ?? "Unknown")
-                Text("Date: \(item.srvStartDate ?? "N/A")")
-                    .font(.caption)
+                Text(item.packageName ?? "Unknown").font(.callout).fontWeight(.semibold)
+                Text(item.invoiceNo ?? "Unknown").font(.footnote).foregroundColor(.gray)
+                Text("Due: \(item.dueAmount?.rounded(toPlaces: 2) ?? "0.0") BDT")
+                    .font(.footnote)
                     .foregroundColor(.gray)
+                Text("Tax: \(item.taxAmount?.rounded(toPlaces: 2) ?? "0.0") | Discount: \(item.discountAmount?.rounded(toPlaces: 2) ?? "0.0")")
+                .font(.footnote)
+                .foregroundColor(.gray)
             }
-            VStack(spacing: 0) {
-                Text("").font(.system(size: 0))
-                Divider().padding(.leading, 5).padding(.trailing, 5)
-                Text("").font(.system(size: 0))
+            Spacer()
+            VStack {
+                Text("\(item.invoiceTotal?.rounded(toPlaces: 2) ?? "0.0") BDT").font(.callout)
+                payButton
             }
-            Text("\(item.packagePrice?.rounded(toPlaces: 2) ?? "0.0") BDT")
+            
         }.padding(.bottom, 10)
     }
 }
@@ -41,16 +96,17 @@ struct InvoiceDetailView: View {
             Button(action: {
                 let userBalance = self.viewModel.userBalance?.balanceAmount ?? 0.0
                 
-                guard let invoiceAmount = self.invoice.dueAmount, let packServiceId = self.invoice.userPackServiceId, let invoiceId = self.invoice.ispInvoiceId else {
+                guard let invoiceAmount = self.invoice.dueAmount,
+                    let invoiceId = self.invoice.ispInvoiceParentId else {
                     return
                 }
                 
                 if invoiceAmount > 0.0 {
                     if userBalance >= invoiceAmount {
-                        self.viewModel.billPaymentHelper = BillPaymentHelper(balanceAmount: invoiceAmount, deductedAmount: invoiceAmount, invoiceId: invoiceId, userPackServiceId: packServiceId, canModify: false)
+                        self.viewModel.billPaymentHelper = BillPaymentHelper(balanceAmount: invoiceAmount, deductedAmount: invoiceAmount, invoiceId: invoiceId, userPackServiceId: 0, canModify: false, isChildInvoice: false)
                         self.showBalanceRechargeAlert = true
                     } else {
-                        self.viewModel.billPaymentHelper = BillPaymentHelper(balanceAmount: invoiceAmount - userBalance, deductedAmount: userBalance, invoiceId: invoiceId, userPackServiceId: packServiceId, canModify: false)
+                        self.viewModel.billPaymentHelper = BillPaymentHelper(balanceAmount: invoiceAmount - userBalance, deductedAmount: userBalance, invoiceId: invoiceId, userPackServiceId: 0, canModify: false, isChildInvoice: false)
                         self.presentationMode.wrappedValue.dismiss()
                         self.viewModel.paymentOptionsModalPublisher.send(true)
                     }
@@ -129,7 +185,7 @@ struct InvoiceDetailView: View {
                 
                 VStack {
                     ForEach(self.viewModel.invoiceDetailList, id: \.id) { item in
-                        ParticularRow(item: item)
+                        ParticularRow(item: item, viewModel: self.viewModel, delegate: self)
                     }
                 }.padding(.bottom, 24)
                 
@@ -165,7 +221,7 @@ struct InvoiceDetailView: View {
         }
         .onAppear {
             self.viewModel.invoiceDetailList.removeAll()
-            self.viewModel.getUserInvoiceDetails(SDate: self.invoice.fromDate ?? "", EDate: self.invoice.toDate ?? "", CDate: self.invoice.createDate ?? "", invId: self.invoice.ispInvoiceId ?? 0, userPackServiceId: self.invoice.userPackServiceId ?? 0)
+            self.viewModel.getUserInvoiceDetails(SDate: self.invoice.fromDate ?? "", EDate: self.invoice.toDate ?? "", CDate: self.invoice.createDate ?? "", invId: self.invoice.ispInvoiceParentId ?? 0)
         }.navigationBarTitle(invoice.genMonth ?? "Invoice Details")
     }
     
@@ -175,6 +231,12 @@ struct InvoiceDetailView: View {
         }
         
         return !paidOrNot
+    }
+}
+
+extension InvoiceDetailView: ChildInvoicePayCallback {
+    func onPayClicked() {
+        self.presentationMode.wrappedValue.dismiss()
     }
 }
 

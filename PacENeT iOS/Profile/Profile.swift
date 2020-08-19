@@ -224,7 +224,7 @@ struct Profile: View {
                         self.viewModel.errorToastPublisher.send((true, "Invalid Amount!"))
                         return
                     }
-                    self.pgwViewModel.billPaymentHelper = BillPaymentHelper(balanceAmount: payAmount, deductedAmount: 0.0, invoiceId: 0, userPackServiceId: userPackServiceId, canModify: true)
+                    self.pgwViewModel.billPaymentHelper = BillPaymentHelper(balanceAmount: payAmount, deductedAmount: 0.0, invoiceId: 0, userPackServiceId: userPackServiceId, canModify: true, isChildInvoice: false)
                     self.pgwViewModel.getFosterPaymentUrl()
                     withAnimation {
                         self.showPaymentOptionsModal = false
@@ -253,7 +253,7 @@ struct Profile: View {
                         self.viewModel.errorToastPublisher.send((true, "Invalid Amount!"))
                         return
                     }
-                    self.pgwViewModel.billPaymentHelper = BillPaymentHelper(balanceAmount: payAmount, deductedAmount: 0.0, invoiceId: 0, userPackServiceId: userPackServiceId, canModify: true)
+                    self.pgwViewModel.billPaymentHelper = BillPaymentHelper(balanceAmount: payAmount, deductedAmount: 0.0, invoiceId: 0, userPackServiceId: userPackServiceId, canModify: true, isChildInvoice: false)
                     self.pgwViewModel.getBkashToken()
                     withAnimation {
                         self.showPaymentOptionsModal = false

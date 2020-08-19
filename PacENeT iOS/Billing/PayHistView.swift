@@ -157,10 +157,10 @@ struct PayServiceBillRowView: View {
                     let userBalance = self.viewModel.userBalance?.balanceAmount ?? 0.0
                     
                     if userBalance >= amount {
-                        self.viewModel.billPaymentHelper = BillPaymentHelper(balanceAmount: amount, deductedAmount: amount, invoiceId: 0, userPackServiceId: self.item.userPackServiceId, canModify: false)
+                        self.viewModel.billPaymentHelper = BillPaymentHelper(balanceAmount: amount, deductedAmount: amount, invoiceId: 0, userPackServiceId: self.item.userPackServiceId, canModify: false, isChildInvoice: false)
                         self.showBalanceRechargeAlert = true
                     } else {
-                        self.viewModel.billPaymentHelper = BillPaymentHelper(balanceAmount: amount - userBalance, deductedAmount: userBalance, invoiceId: 0, userPackServiceId: self.item.userPackServiceId, canModify: false)
+                        self.viewModel.billPaymentHelper = BillPaymentHelper(balanceAmount: amount - userBalance, deductedAmount: userBalance, invoiceId: 0, userPackServiceId: self.item.userPackServiceId, canModify: false, isChildInvoice: false)
                         self.payServiceBillModalShowDelegate.dismissModal()
                         self.viewModel.paymentOptionsModalPublisher.send(true)
                     }
@@ -210,7 +210,7 @@ struct PayServiceBillRowView: View {
                 .font(.body)
             }
             Spacer()
-            payButton
+            //payButton
         }.padding(.top, 4).padding(.bottom, 4)
     }
     

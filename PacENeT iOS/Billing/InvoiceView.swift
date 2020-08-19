@@ -72,7 +72,7 @@ struct InvoiceView: View {
     @ObservedObject var viewModel: BillingViewModel
     let listOffset: Int = 10
     var body: some View {
-        List(self.viewModel.invoiceList, id: \.ispInvoiceId) { item in
+        List(self.viewModel.invoiceList, id: \.ispInvoiceParentId) { item in
             NavigationLink(destination: InvoiceDetailView(viewModel: self.viewModel, invoice: item)) {
                 InvoiceRow(invoice: item).onAppear {
                     self.invoiceItemAppears(item: item)
@@ -95,7 +95,7 @@ extension RandomAccessCollection where Self.Element == Invoice {
             return false
         }
         
-        guard let itemIndex = firstIndex(where: { $0.ispInvoiceId == item.ispInvoiceId }) else {
+        guard let itemIndex = firstIndex(where: { $0.ispInvoiceParentId == item.ispInvoiceParentId }) else {
             return false
         }
         
@@ -108,7 +108,7 @@ extension RandomAccessCollection where Self.Element == Invoice {
             return false
         }
         
-        guard let itemIndex = firstIndex(where: { $0.ispInvoiceId == item.ispInvoiceId }) else {
+        guard let itemIndex = firstIndex(where: { $0.ispInvoiceParentId == item.ispInvoiceParentId }) else {
             return false
         }
         

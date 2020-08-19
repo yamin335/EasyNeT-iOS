@@ -79,4 +79,3 @@ extension SceneDelegate: UIGestureRecognizerDelegate {
         return true
     }
 }
-

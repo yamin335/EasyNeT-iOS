@@ -346,7 +346,7 @@ class ProfileViewModel: ObservableObject {
                                                             deductBalance: helper.deductedAmount,
                                                             isBalanceDeduct: helper.deductedAmount > 0.0 ? true : false,
                                                             isActive: changingUserPackService.isActive,
-                                                            isNoneStop: consumeData?.isDue,
+                                                            isNoneStop: changingUserPackService.isNoneStop,
                                                             isDefault: changingUserPackService.isDefault)
         
         let packUserInfo: PackUserInfo = PackUserInfo(id: userConnectionId,
@@ -654,7 +654,7 @@ class ProfileViewModel: ObservableObject {
                                                             deductBalance: helper.deductedAmount,
                                                             isBalanceDeduct: helper.deductedAmount > 0.0 ? true : false,
                                                             isActive: changingUserPackService.isActive,
-                                                            isNoneStop: consumeData?.isDue,
+                                                            isNoneStop: changingUserPackService.isNoneStop,
                                                             isDefault: changingUserPackService.isDefault)
         
         let resBkashData = Data(resBkashString.utf8)
@@ -798,7 +798,7 @@ class ProfileViewModel: ObservableObject {
                                                             deductBalance: helper.deductedAmount,
                                                             isBalanceDeduct: helper.deductedAmount > 0.0 ? true : false,
                                                             isActive: changingUserPackService.isActive,
-                                                            isNoneStop: consumeData?.isDue,
+                                                            isNoneStop: changingUserPackService.isNoneStop,
                                                             isDefault: changingUserPackService.isDefault)
         
         let packUserInfo: PackUserInfo = PackUserInfo(id: userConnectionId,

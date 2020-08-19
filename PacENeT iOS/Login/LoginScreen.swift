@@ -26,16 +26,17 @@ struct LoginScreen: View {
     
     var contentView: some View {
         VStack(alignment: .center) {
-            Image("pace_net")
-                .resizable()
-                .frame(width: 120, height: 120)
+            Image("pacenet_white")
+                .resizable().scaledToFit()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 120, height: 120).padding(.top, 200)
             
             TextField("Username", text: $loginViewModel.username)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .textFieldStyle(RoundedBorderTextFieldStyle()).cornerRadius(20)
                 .padding(.leading, 20).padding(.trailing, 20).padding(.top, 20)
             
             SecureField("Password", text: $loginViewModel.password)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .textFieldStyle(RoundedBorderTextFieldStyle()).cornerRadius(20)
                 .padding(.leading, 20).padding(.trailing, 20).padding(.top, 8)
             HStack{
                 Button(action: {
@@ -43,13 +44,13 @@ struct LoginScreen: View {
                 }) {
                     HStack{
                         Spacer()
-                        Text("Sign In").foregroundColor(.white)
+                        Text("Sign In").foregroundColor(Colors.greenTheme)
                         Spacer()
                     }
                     .padding(.top, 8)
                     .padding(.bottom, 8)
-                    .background(Colors.greenTheme)
-                    .cornerRadius(2)
+                    .background(Color.white)
+                    .cornerRadius(20)
                 }
                 .disabled(loginButtonDisabled)
                 .onReceive(self.loginViewModel.validatedCredentials) { validCredential in
@@ -107,16 +108,16 @@ struct LoginScreen: View {
                         
                         NavigationLink(destination: PrivacyView()) {
                             Text("Privacy")
-                                .foregroundColor(Colors.greenTheme)
+                                .foregroundColor(Color.white)
                                 .font(.subheadline)
                         }
                         
                         Divider().frame(width: 1, height: 14, alignment: .center)
-                            .background(Colors.greenTheme)
+                            .background(Color.white)
                         
                         NavigationLink(destination: ContactView()) {
                             Text("Contact")
-                                .foregroundColor(Colors.greenTheme)
+                                .foregroundColor(Color.white)
                                 .font(.subheadline)
                         }
                     }
@@ -125,9 +126,9 @@ struct LoginScreen: View {
                     
                     Text("All Rights Reserved. Copyright ©2020, Royal Green Ltd.")
                         .font(.footnote)
-                        .foregroundColor(.gray)
+                        .foregroundColor(Color.white)
                         .multilineTextAlignment(.center)
-                        .padding(.bottom, 8)
+                        .padding(.bottom, 30)
                     
                 }
 //                .onReceive(self.loginViewModel.signUpModalValuePublisher.receive(on: RunLoop.main)) { value in
@@ -165,7 +166,8 @@ struct LoginScreen: View {
                     SpinLoaderView()
                 }
                 
-            }
+            }.background(Image("splash_background").resizable().scaledToFill())
+            .edgesIgnoringSafeArea(.all)
             .onReceive(self.loginViewModel.showLoginLoader.receive(on: RunLoop.main)) { doingSomethingNow in
                 self.showLoader = doingSomethingNow
             }

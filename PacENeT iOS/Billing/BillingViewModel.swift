@@ -14,7 +14,7 @@ class BillingViewModel: ObservableObject {
     // MARK: - Properties
     //@Published var paymentAmount: Double? = nil
     @Published var invoiceList = [Invoice]()
-    @Published var invoiceDetailList = [InvoiceDetail]() {
+    @Published var invoiceDetailList = [ChildInvoice]() {
         willSet {
             objectWillChange.send(true)
         }
@@ -222,7 +222,8 @@ class BillingViewModel: ObservableObject {
                           "Name": "sale",
                           "currency": currency,
                           "mrcntNumber": marchantInvNo,
-                          "canModify": paymentHelper.canModify] as [String : Any]
+                          "canModify": paymentHelper.canModify,
+                          "isChildInvoicePayment": paymentHelper.isChildInvoice] as [String : Any]
         let jsonArray = [jsonObject]
         
         guard let jsonData = try? JSONSerialization.data(withJSONObject: jsonArray, options: []) else {
@@ -422,7 +423,8 @@ class BillingViewModel: ObservableObject {
                           "TransactionNo": trxId,
                           "UserName": userName,
                           "UserPackServiceId": paymentHelper.userPackServiceId,
-                          "UserTypeId": userTypeId] as [String : Any]
+                          "UserTypeId": userTypeId,
+                          "isChildInvoicePayment": paymentHelper.isChildInvoice] as [String : Any]
         
         let jsonArray = [jsonObject, bkashJson]
         
@@ -834,8 +836,8 @@ class BillingViewModel: ObservableObject {
     
     // MARK: - getUserInvoiceDetails()
     // Get user's specific invoice details
-    func getUserInvoiceDetails(SDate: String, EDate: String, CDate: String, invId: Int, userPackServiceId: Int) {
-        self.invoiceDetailSubscriber = self.executeInvoiceDetailApiCall(SDate: SDate, EDate: EDate, CDate: CDate, invId: invId, userPackServiceId: userPackServiceId)?
+    func getUserInvoiceDetails(SDate: String, EDate: String, CDate: String, invId: Int) {
+        self.invoiceDetailSubscriber = self.executeInvoiceDetailApiCall(SDate: SDate, EDate: EDate, CDate: CDate, invId: invId)?
             .sink(receiveCompletion: { completion in
                 switch completion {
                     case .finished:
@@ -844,7 +846,7 @@ class BillingViewModel: ObservableObject {
                     print(error.localizedDescription)
                 }
             }, receiveValue: { response in
-                guard let validResponse = response.resdata?.userinvoiceDetail else {
+                guard let validResponse = response.resdata?.userChildInvoiceDetail else {
                     return
                 }
                 
@@ -853,7 +855,7 @@ class BillingViewModel: ObservableObject {
                     return
                 }
                 
-                guard let invoiceDetailList = try? JSONDecoder().decode([InvoiceDetail].self, from: responseData) else {
+                guard let invoiceDetailList = try? JSONDecoder().decode([ChildInvoice].self, from: responseData) else {
                     return
                 }
                 
@@ -863,8 +865,9 @@ class BillingViewModel: ObservableObject {
             })
     }
     
-    func executeInvoiceDetailApiCall(SDate: String, EDate: String, CDate: String, invId: Int, userPackServiceId: Int) -> AnyPublisher<InvoiceDetailResponse, Error>? {
-        let jsonObject = ["SDate": SDate, "EDate": EDate, "CDate": CDate, "invId": invId, "IspUserID": UserLocalStorage.getLoggedUserData()?.userID ?? 0, "userPackServiceId": userPackServiceId] as [String : Any]
+    func executeInvoiceDetailApiCall(SDate: String, EDate: String, CDate: String, invId: Int) -> AnyPublisher<ChildInvoiceResponse, Error>? {
+        let jsonObject = ["SDate": SDate, "EDate": EDate, "CDate": CDate,
+                          "invId": invId, "IspUserID": UserLocalStorage.getLoggedUserData()?.userID ?? 0] as [String : Any]
         let jsonArray = [jsonObject]
 
         guard let jsonData = try? JSONSerialization.data(withJSONObject: jsonArray, options: []) else {
@@ -879,7 +882,7 @@ class BillingViewModel: ObservableObject {
         var queryItems = [URLQueryItem]()
         
         queryItems.append(URLQueryItem(name: "param", value: params))
-        guard var urlComponents = URLComponents(string: NetworkApiService.webBaseUrl+"/api/ispportal/getispuserinvocedetail") else {
+        guard var urlComponents = URLComponents(string: NetworkApiService.webBaseUrl+"/api/ispportal/getallispchildinvdetailsbyusrid") else {
             print("Problem in UrlComponent creation...")
             return nil
         }
@@ -910,7 +913,7 @@ class BillingViewModel: ObservableObject {
                 return data
         }
         .retry(1)
-        .decode(type: InvoiceDetailResponse.self, decoder: JSONDecoder())
+        .decode(type: ChildInvoiceResponse.self, decoder: JSONDecoder())
         .receive(on: RunLoop.main)
         .eraseToAnyPublisher()
     }

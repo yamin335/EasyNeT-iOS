@@ -12,6 +12,12 @@ struct SplashAndLoginContainer: View {
     
     @EnvironmentObject var userData: UserData
     
+    init() {
+        // For navigation bar background color
+        UINavigationBar.appearance().barTintColor = nil
+        UINavigationBar.appearance().backgroundColor = nil
+    }
+    
     var body: some View {
         ZStack{
             LoginScreen()
