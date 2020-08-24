@@ -20,7 +20,7 @@ struct ParticularRow: View {
     
     // MARK: - payButton
     var payButton: some View {
-        Text("Pay Now")
+        Text("Pay Due")
             .font(.system(size: 14))
             .font(.body)
             .onTapGesture {
@@ -76,7 +76,10 @@ struct ParticularRow: View {
             Spacer()
             VStack {
                 Text("\(item.invoiceTotal?.rounded(toPlaces: 2) ?? "0.0") BDT").font(.callout)
-                payButton
+                
+                if item.isPaid == false {
+                    payButton
+                }
             }
             
         }.padding(.bottom, 10)
@@ -124,7 +127,7 @@ struct InvoiceDetailView: View {
                         .padding(.top, 14)
                         .padding(.bottom, 12)
                     
-                    Text("Pay Bill Now")
+                    Text("Pay Due Now")
                         .font(.system(size: 16))
                         .font(.body)
                         .foregroundColor(.blue)
@@ -210,6 +213,12 @@ struct InvoiceDetailView: View {
                             Spacer()
                             Text("\(invoice.invoiceTotal?.rounded(toPlaces: 2) ?? "0.0") BDT")
                         }
+                        
+                        HStack {
+                            Text("Due:")
+                            Spacer()
+                            Text("\(invoice.dueAmount?.rounded(toPlaces: 2) ?? "0.0") BDT")
+                        }.padding(.top, 8)
                     }.frame(width: 250)
                 }
                 

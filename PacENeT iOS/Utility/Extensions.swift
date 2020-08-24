@@ -28,7 +28,11 @@ extension String {
         } else {
             let tempSplits = self.split(separator: "-")
 
-            return "\(tempSplits[2]) \(months[Int(tempSplits[1]) ?? 0] ?? ""), \(tempSplits[0])"
+            if tempSplits.count > 2 {
+                return "\(tempSplits[2]) \(months[Int(tempSplits[1]) ?? 0] ?? ""), \(tempSplits[0])"
+            } else {
+                return ""
+            }
         }
     }
 }
