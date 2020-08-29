@@ -58,6 +58,7 @@ struct LoginScreen: View {
                 }
                 .onReceive(self.loginViewModel.loginStatusPublisher.receive(on: RunLoop.main)) { isLoggedIn in
                     self.userData.isLoggedIn = isLoggedIn
+                    UserLocalStorage.setUserSignedIn(isLoggedin: isLoggedIn)
                 }
             }
             .frame(minWidth: 0, maxWidth: .infinity)

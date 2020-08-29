@@ -19,6 +19,14 @@ final class UserData: ObservableObject  {
 struct UserLocalStorage {
     private static let userDefault = UserDefaults.standard
     
+    static func setUserSignedIn(isLoggedin: Bool) {
+        userDefault.set(isLoggedin, forKey: "isLoggedIn")
+    }
+    
+    static func isLoggedIn() -> Bool {
+        return userDefault.value(forKey: "isLoggedIn") as? Bool ?? false
+    }
+    
     static func saveLoggedUserData(loggedUserData: LoggedUserData) {
         let encoder = JSONEncoder()
         if let encodedUserData = try? encoder.encode(loggedUserData) {

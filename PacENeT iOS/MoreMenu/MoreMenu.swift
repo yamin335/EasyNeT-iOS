@@ -35,7 +35,7 @@ struct MoreMenu: View {
         }
         .alert(isPresented:$showSignoutAlert) {
             Alert(title: Text("Sign Out"), message: Text("Are you sure to sign out?"), primaryButton: .destructive(Text("Yes")) {
-                self.viewModel.logOut()
+                self.signOut()
                 }, secondaryButton: .cancel(Text("No")))
         }
     }
@@ -215,14 +215,6 @@ struct MoreMenu: View {
                     SpinLoaderView()
                 }
             }
-            .onReceive(self.viewModel.signoutPublisher.receive(on: RunLoop.main)) { doSignOut in
-                if doSignOut {
-                    UserLocalStorage.clearLoggedUserData()
-                    UserLocalStorage.clearUserCredentials()
-                    self.userData.isLoggedIn = false
-                    self.userData.selectedTabItem = 0
-                }
-            }
             .onReceive(self.viewModel.showLoader.receive(on: RunLoop.main)) { doingSomethingNow in
                 self.showLoader = doingSomethingNow
             }
@@ -247,6 +239,14 @@ struct MoreMenu: View {
         self.viewModel.oldPassword = ""
         self.viewModel.newPassword = ""
         self.viewModel.newConfPassword = ""
+    }
+    
+    func signOut() {
+        UserLocalStorage.clearLoggedUserData()
+        UserLocalStorage.clearUserCredentials()
+        UserLocalStorage.setUserSignedIn(isLoggedin: false)
+        self.userData.isLoggedIn = false
+        self.userData.selectedTabItem = 0
     }
 }
 

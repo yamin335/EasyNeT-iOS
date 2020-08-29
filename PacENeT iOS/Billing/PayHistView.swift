@@ -59,9 +59,10 @@ struct PayHistView: View {
         VStack(spacing: 0) {
             if userType == 1 {
                 headerViewPrePaid
-            } else if userType == 2 {
-                headerViewPostPaid
             }
+//            else if userType == 2 {
+//                headerViewPostPaid
+//            }
             List(self.viewModel.payHistList, id: \.ispPaymentID) { item in
                 PayHistRow(payHist: item).onAppear {
                     self.paymentItemAppears(item: item)

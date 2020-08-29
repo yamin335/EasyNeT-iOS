@@ -26,6 +26,9 @@ struct SplashAndLoginContainer: View {
                 .onAppear {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
                         withAnimation() {
+                            if UserLocalStorage.isLoggedIn() {
+                                self.userData.isLoggedIn = true
+                            }
                             self.userData.shouldShowSplash = false
                         }
                     }
