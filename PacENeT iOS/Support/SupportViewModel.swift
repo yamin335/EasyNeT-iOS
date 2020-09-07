@@ -22,7 +22,11 @@ class SupportViewModel: ObservableObject {
     var errorToastPublisher = PassthroughSubject<(Bool, String), Never>()
     var successToastPublisher = PassthroughSubject<(Bool, String), Never>()
     var pageNumber = -1
-    var choosenImage: ImageData?
+    @Published var choosenImage: ImageData? {
+           didSet {
+               self.objectWillChange.send(true)
+           }
+    }
     
     @Published var choosenImageList = [ImageData]() {
         didSet {

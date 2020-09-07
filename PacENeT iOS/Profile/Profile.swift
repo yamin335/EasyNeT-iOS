@@ -38,139 +38,6 @@ struct Profile: View {
     @State var showPGW = false
     @State var pgw: PGW = .BKASH
     
-    var signoutButton: some View {
-        Button(action: {
-            self.showSignoutAlert = true
-        }) {
-            Text("Sign Out")
-                .foregroundColor(Colors.greenTheme)
-        }
-        .alert(isPresented:$showSignoutAlert) {
-            Alert(title: Text("Sign Out"), message: Text("Are you sure to sign out?"), primaryButton: .destructive(Text("Yes")) {
-                self.userData.isLoggedIn = false
-                self.userData.selectedTabItem = 0
-                }, secondaryButton: .cancel(Text("No")))
-        }
-    }
-    
-    var refreshButton: some View {
-        Button(action: {
-            self.viewModel.refreshUI()
-        }) {
-            Image(systemName: "arrow.clockwise")
-                .font(.system(size: 18, weight: .light))
-                .imageScale(.large)
-                .accessibility(label: Text("Refresh"))
-                .padding()
-                .foregroundColor(Colors.greenTheme)
-            
-        }
-    }
-    
-    var profileHeader: some View {
-        Colors.color5.overlay( HStack {
-            VStack {
-                Circle().fill(Color.white)
-                    .frame(width: 96, height: 96)
-                    .overlay(
-                        Image("profile_avater")
-                            .resizable()
-                            .frame(width: 65, height: 65))
-                
-                Text(name)
-                    .bold()
-                    .font(.system(size: 18))
-                    .font(.title)
-                    .foregroundColor(Colors.color6)
-                Spacer()
-                }.padding(.top, 24)
-        }).frame(minWidth: 0, maxWidth: .infinity, maxHeight: 175)
-    }
-    
-    var balanceView: some View {
-        VStack(alignment: .leading) {
-            Text("Balance")
-                .bold()
-                .font(.system(size: 15))
-                .font(.title)
-                .foregroundColor(Color.gray)
-            Text(viewModel.balance)
-                .font(.system(size: 14))
-                .font(.body)
-                .foregroundColor(Color.gray)
-        }
-    }
-    
-    var dueView: some View {
-        VStack(alignment: .leading) {
-            Text("Due")
-                .bold()
-                .font(.system(size: 15))
-                .font(.title)
-                .foregroundColor(Color.gray)
-            Text(viewModel.due)
-                .font(.system(size: 14))
-                .font(.body)
-                .foregroundColor(Color.gray)
-        }
-    }
-    
-    var createView: some View {
-        VStack(alignment: .leading) {
-            Text("Created On")
-                .bold()
-                .font(.system(size: 15))
-                .font(.title)
-                .foregroundColor(Color.gray)
-            Text(createDate)
-                .font(.system(size: 14))
-                .font(.body)
-                .foregroundColor(Color.gray)
-        }
-    }
-    
-    var chargeView: some View {
-        VStack(alignment: .leading) {
-            Text("Monthly Charge")
-                .bold()
-                .font(.system(size: 15))
-                .font(.title)
-                .foregroundColor(Color.gray)
-            Text(packageCharge + " (BDT)")
-                .font(.system(size: 14))
-                .font(.body)
-                .foregroundColor(Color.gray)
-        }
-    }
-    
-    var emailView: some View {
-        VStack(alignment: .leading) {
-            Text("Email")
-                .bold()
-                .font(.system(size: 15))
-                .font(.title)
-                .foregroundColor(Color.gray)
-            Text(email)
-                .font(.system(size: 14))
-                .font(.body)
-                .foregroundColor(Color.gray)
-        }
-    }
-    
-    var phoneView: some View {
-        VStack(alignment: .leading) {
-            Text("Phone")
-                .bold()
-                .font(.system(size: 15))
-                .font(.title)
-                .foregroundColor(Color.gray)
-            Text(phone)
-                .font(.system(size: 14))
-                .font(.body)
-                .foregroundColor(Color.gray)
-        }
-    }
-    
     var background: some View {
         VStack {
             Rectangle().background(Color.black).blur(radius: 0.5, opaque: false).opacity(0.3)
@@ -308,35 +175,226 @@ struct Profile: View {
         .zIndex(2)
     }
     
+    var signoutButton: some View {
+        Button(action: {
+            self.showSignoutAlert = true
+        }) {
+            Text("Sign Out")
+                .foregroundColor(Colors.greenTheme)
+        }
+        .alert(isPresented:$showSignoutAlert) {
+            Alert(title: Text("Sign Out"), message: Text("Are you sure to sign out?"), primaryButton: .destructive(Text("Yes")) {
+                self.userData.isLoggedIn = false
+                self.userData.selectedTabItem = 0
+                }, secondaryButton: .cancel(Text("No")))
+        }
+    }
+    
+    var refreshButton: some View {
+        Button(action: {
+            self.viewModel.refreshUI()
+        }) {
+            Image(systemName: "arrow.clockwise")
+                .font(.system(size: 18, weight: .light))
+                .imageScale(.large)
+                .accessibility(label: Text("Refresh"))
+                .padding()
+                .foregroundColor(Colors.greenTheme)
+            
+        }
+    }
+    
+    var profileImage: some View {
+        Circle()
+            .fill(Color.white)
+            .frame(width: 96, height: 96)
+            .overlay(
+            Image("profile_avater")
+                .resizable()
+                .frame(width: 65, height: 65)).shadow(radius: 5)
+    }
+    
+    var coverImage: some View {
+        Image("profile_cover")
+        .resizable().frame(minWidth: 0, maxWidth: .infinity, maxHeight: 130)
+        
+    }
+    
+    var balanceView: some View {
+        HStack(alignment: .center) {
+            Image(systemName: "dollarsign.circle.fill")
+                .font(.system(size: 17, weight: .regular))
+                .imageScale(.large)
+                .padding(.trailing, 5)
+                .foregroundColor(Colors.color2)
+            
+            Text("Balance")
+                .bold()
+                .font(.system(size: 17))
+                .font(.title)
+                .foregroundColor(Colors.color2)
+            
+            Spacer()
+            
+            Text(viewModel.balance)
+                .font(.system(size: 16, weight: .light))
+                .foregroundColor(Color.gray)
+        }.padding(.bottom, 10)
+    }
+    
+    var dueView: some View {
+        HStack(alignment: .center) {
+            Image(systemName: "exclamationmark.bubble.fill")
+                .font(.system(size: 17, weight: .regular))
+                .imageScale(.large)
+                .padding(.trailing, 5)
+                .foregroundColor(Colors.color2)
+            
+            Text("Due")
+                .bold()
+                .font(.system(size: 17))
+                .font(.title)
+                .foregroundColor(Colors.color2)
+            
+            Spacer()
+            
+            Text(viewModel.due)
+                .font(.system(size: 16, weight: .light))
+                .foregroundColor(Color.gray)
+        }.padding(.bottom, 10)
+    }
+    
+    var createView: some View {
+        HStack(alignment: .center) {
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 17, weight: .regular))
+                .imageScale(.large)
+                .padding(.trailing, 5)
+                .foregroundColor(Colors.color2)
+            
+            Text("Created On")
+                .bold()
+                .font(.system(size: 17))
+                .font(.title)
+                .foregroundColor(Colors.color2)
+            
+            Spacer()
+            
+            Text(createDate)
+                .font(.system(size: 16, weight: .light))
+                .foregroundColor(Color.gray)
+        }.padding(.bottom, 10)
+    }
+    
+    var chargeView: some View {
+        HStack(alignment: .center) {
+            Image(systemName: "dollarsign.circle.fill")
+                .font(.system(size: 17, weight: .regular))
+                .imageScale(.large)
+                .padding(.trailing, 5)
+                .foregroundColor(Colors.color2)
+            
+            Text("Monthly Charge")
+                .bold()
+                .font(.system(size: 17))
+                .font(.title)
+                .foregroundColor(Colors.color2)
+            
+            Spacer()
+            
+            Text(packageCharge + " (BDT)")
+                .font(.system(size: 16, weight: .light))
+                .foregroundColor(Color.gray)
+        }.padding(.bottom, 10)
+    }
+    
+    var emailView: some View {
+        HStack(alignment: .center) {
+            Image(systemName: "envelope.fill")
+                .font(.system(size: 17, weight: .regular))
+                .imageScale(.large)
+                .padding(.trailing, 5)
+                .foregroundColor(Colors.color2)
+            
+            Text("Email")
+                .bold()
+                .font(.system(size: 17))
+                .font(.title)
+                .foregroundColor(Colors.color2)
+            
+            Spacer()
+            
+            Text(email)
+                .font(.system(size: 16, weight: .light))
+                .foregroundColor(Color.gray)
+        }.padding(.bottom, 10)
+    }
+    
+    var phoneView: some View {
+        HStack(alignment: .center) {
+            Image(systemName: "phone.fill")
+                .font(.system(size: 17, weight: .regular))
+                .imageScale(.large)
+                .padding(.trailing, 5)
+                .foregroundColor(Colors.color2)
+            
+            Text("Phone")
+                .bold()
+                .font(.system(size: 17))
+                .font(.title)
+                .foregroundColor(Colors.color2)
+            
+            Spacer()
+            
+            Text(phone)
+                .font(.system(size: 16, weight: .light))
+                .foregroundColor(Color.gray)
+        }.padding(.bottom, 10)
+    }
+    
     var body: some View {
         
         NavigationView {
             ZStack {
-                VStack(alignment: .leading, spacing: 0) {
+                VStack(alignment: .center, spacing: 0) {
+                    coverImage
+                    
+                    profileImage.offset(y: -70)
+                    .padding(.bottom, -70)
+                    
                     Text(name)
-                        .font(.system(size: 17))
+                        .font(.system(size: 24))
                         .fontWeight(.heavy)
-                        .padding(.top, 8)
-                        .padding(.bottom, 6)
+                        .padding(.top, 16)
+                        .padding(.bottom, 16)
                         .padding(.leading, 16)
                         .padding(.trailing, 16)
-                        .foregroundColor(.gray)
+                        .foregroundColor(Colors.color2)
                     
                     Group {
                         balanceView.padding(.leading, 16).padding(.trailing, 16).padding(.top, 5)
+                        Divider().padding(.leading, 16)
                         dueView.padding(.leading, 16).padding(.trailing, 16).padding(.top, 8)
+                        Divider().padding(.leading, 16)
                         createView.padding(.leading, 16).padding(.trailing, 16).padding(.top, 8)
+                        Divider().padding(.leading, 16)
                         emailView.padding(.leading, 16).padding(.trailing, 16).padding(.top, 8)
+                        Divider().padding(.leading, 16)
                         phoneView.padding(.leading, 16).padding(.trailing, 16).padding(.top, 8)
+                        Divider().padding(.leading, 16)
                     }
                     
-                    Text("Your Services")
-                    .font(.system(size: 17))
-                    .fontWeight(.heavy)
-                    .padding(.top, 20)
-                    .padding(.leading, 16)
-                    .padding(.trailing, 16)
-                    .foregroundColor(.gray)
+                    HStack {
+                        Text("SERVICES")
+                        .font(.system(size: 20))
+                        .fontWeight(.heavy)
+                        .padding(.top, 20)
+                        .padding(.leading, 16)
+                        .padding(.trailing, 16)
+                        .foregroundColor(.gray)
+                        
+                        Spacer()
+                    }
                     VStack {
                         List(self.viewModel.userPackServices, id: \.userPackServiceId) { dataItem in
                             PackServiceRowView(item: dataItem, viewModel: self.viewModel)
@@ -391,8 +449,10 @@ struct Profile: View {
                     }
                 }
                 .onReceive(self.viewModel.showServiceChangeModal.receive(on: RunLoop.main)) { (boolData, packService) in
-                    self.changingUserPackService = packService
-                    self.isPackageSheetPresented = boolData
+                    if packService.packServiceTypeId == 1 {
+                        self.changingUserPackService = packService
+                        self.isPackageSheetPresented = boolData
+                    }
                 }
                 .onReceive(self.pgwViewModel.showPGW.receive(on: RunLoop.main)) { (shouldShow, pgw) in
                     self.pgw = pgw
@@ -478,7 +538,7 @@ struct Profile: View {
         let userInfo = UserLocalStorage.getLoggedUserData()
         let nameData = userInfo?.displayName ?? ""
         self.name = nameData.isEmpty ? "No Name Provided" : nameData
-        self.createDate = "Date & Time: \(userInfo?.created?.formatDate() ?? "")  \(userInfo?.created?.formatTime() ?? "")"
+        self.createDate = "\(userInfo?.created ?? "")"
         self.package = userInfo?.srvName ?? ""
         self.packageCharge = String(userInfo?.unitPrice ?? 0.0)
         let emailData = userInfo?.email ?? ""

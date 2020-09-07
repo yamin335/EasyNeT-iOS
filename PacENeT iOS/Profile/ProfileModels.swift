@@ -144,7 +144,7 @@ struct PayMethodResdata: Codable {
 // MARK: - PayMethod
 struct PayMethod: Codable {
     let methodId: Int
-    let methodName: String?
+    var methodName: String?
 }
 
 // MARK: - PackageChangeConsumeResponse

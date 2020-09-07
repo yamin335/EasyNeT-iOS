@@ -7,7 +7,7 @@
 //
 
 import XCTest
-@testable import PacENeT_iOS
+@testable import PacENeT
 
 class PacENeT_iOSTests: XCTestCase {
 

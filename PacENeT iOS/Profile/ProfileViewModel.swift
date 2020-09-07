@@ -582,7 +582,7 @@ class ProfileViewModel: ObservableObject {
                         print(error.localizedDescription)
                 }
             }, receiveValue: { (payMethodResponse, consumeDataResponse) in
-                guard let payMethods = payMethodResponse.resdata?.listPaymentMethod, let consumeData = consumeDataResponse.resdata else {
+                guard let payMethods = payMethodResponse.resdata?.listPaymentMethod?.filter({$0.methodName == "Card"}).map({PayMethod(methodId: $0.methodId, methodName: "\($0.methodName ?? "")/BKash")}), let consumeData = consumeDataResponse.resdata else {
                     return
                 }
                 self.showPackageChangePayModalPublisher.send((payMethods, consumeData))

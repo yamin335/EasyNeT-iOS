@@ -139,15 +139,15 @@ struct MoreMenu: View {
         NavigationView {
             ZStack {
                 Form {
-                    Section(header: Text("General Settings")) {
-                        Button(action: {
-                            withAnimation {
-                                self.showChangePassModal.toggle()
-                            }
-                        }) {
-                            Text("Change Password").foregroundColor(.black)
-                        }
-                    }
+//                    Section(header: Text("General Settings")) {
+//                        Button(action: {
+//                            withAnimation {
+//                                self.showChangePassModal.toggle()
+//                            }
+//                        }) {
+//                            Text("Change Password").foregroundColor(.black)
+//                        }
+//                    }
                     Section {
                         NavigationLink(destination: PrivacyView()) {
                             Text("Privacy Policy")

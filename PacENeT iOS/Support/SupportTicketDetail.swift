@@ -59,7 +59,7 @@ struct SupportTicketDetail: View {
                 
                 Divider().padding(.top, 16)
                 
-                if image != nil {
+                if self.viewModel.choosenImage != nil {
                     HStack {
                         image?.resizable().frame(width: 50, height: 40).scaledToFit()
                         VStack(alignment: .leading) {
@@ -83,6 +83,7 @@ struct SupportTicketDetail: View {
                             .foregroundColor(.gray)
                         }
                     }.padding(.leading, 12).padding(.trailing, 12).padding(.top, 12)
+
                 }
 
                 HStack(spacing: 0) {

@@ -17,7 +17,11 @@ struct PackServiceRowView: View {
             .font(.system(size: 14))
             .font(.body)
             .onTapGesture {
-                self.viewModel.getPayMethodsAndConsumeData(selectedPackServiceId: self.item.userPackServiceId)
+                if self.item.packServiceTypeId == 1 {
+                    self.viewModel.getPayMethodsAndConsumeData(selectedPackServiceId: self.item.userPackServiceId)
+                } else {
+                    self.viewModel.warningToastPublisher.send((true, "Please contact with our office!"))
+                }
             }
             .foregroundColor(Colors.color7)
             .padding(.trailing, 10)
@@ -56,9 +60,7 @@ struct PackServiceRowView: View {
                     .font(.body)
             }
             Spacer()
-            if item.packServiceTypeId == 1 {
-                changeButton
-            }
+            changeButton
         }
         .padding(.top, 4)
         .padding(.bottom, 4)

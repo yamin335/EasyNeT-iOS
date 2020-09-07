@@ -229,109 +229,89 @@ struct Dashboard: View {
         GeometryReader { geometry in
             ZStack {
                 VStack(spacing: 0) {
-//                    self.shortCutMenu.frame(minWidth: 0, maxWidth: .infinity)
-                    Group {
-                        VStack(alignment: .center) {
-                            HStack(alignment: .top) {
-                                Spacer()
+                    HStack(alignment: .top, spacing: 5) {
+                        Spacer()
+                        VStack {
+                            ZStack {
+                                Rectangle()
+                                    .foregroundColor(Color.white)
+                                    .cornerRadius(8)
+                                    .opacity(1)
+                                    .shadow(color: .black, radius: 2)
                                 VStack {
-                                    Image("my_account")
-                                        .resizable()
-                                        .frame(width: self.getImageSize(width: geometry.size.width, height: (geometry.size.height / 2) - 20), height: self.getImageSize(width: geometry.size.width, height: (geometry.size.height / 2) - 20))
-                                        
+                                    Image("user")
+                                        .resizable().scaledToFit()
+                                        .aspectRatio(contentMode: .fit).padding()
+                                    
+                                    Spacer()
+                                      
                                     Text("My Account")
-                                        .frame(width: self.getImageSize(width: geometry.size.width, height: (geometry.size.height / 2) - 20))
                                         .fixedSize(horizontal: false, vertical: true)
-                                        .multilineTextAlignment(.center)
-                                }
-                                //.padding(.top, 30)
-                                .onTapGesture {
-                                    self.userData.selectedTabItem = 1
-                                }
-                                Spacer()
-                                VStack {
-                                    Image("pay_now")
-                                        .resizable()
-                                        .frame(width: self.getImageSize(width: geometry.size.width, height: (geometry.size.height / 2) - 20), height: self.getImageSize(width: geometry.size.width, height: (geometry.size.height / 2) - 20))
-                                      
-                                    Text("Pay Now")
-                                        .frame(width: self.getImageSize(width: geometry.size.width, height: (geometry.size.height / 2) - 20))
-                                        .fixedSize(horizontal: false, vertical: true)
-                                        .multilineTextAlignment(.center)
-                                }
-                                //.padding(.top, 30)
-                                .onTapGesture {
-                                    self.userData.selectedTabItem = 2
-                                }
-                                Spacer()
-                                VStack {
-                                    Image("pay_history")
-                                        .resizable()
-                                        .frame(width: self.getImageSize(width: geometry.size.width, height: (geometry.size.height / 2) - 20), height: self.getImageSize(width: geometry.size.width, height: (geometry.size.height / 2) - 20))
-                                      
-                                    Text("Bill History")
-                                        .frame(width: self.getImageSize(width: geometry.size.width, height: (geometry.size.height / 2) - 20))
-                                        .fixedSize(horizontal: false, vertical: true)
-                                        .multilineTextAlignment(.center)
-                                }
-                                //.padding(.top, 30)
-                                .onTapGesture {
-                                    self.userData.selectedTabItem = 2
-                                }
-                                Spacer()
+                                        .multilineTextAlignment(.center).padding(4)
+                                }.padding(.vertical)
                             }
-                            Spacer()
-                            
-                            HStack(alignment: .top) {
-                                Spacer()
+                        }
+                        .onTapGesture {
+                            self.userData.selectedTabItem = 1
+                        }
+                        
+                        Spacer()
+                        
+                        VStack {
+                            ZStack {
+                                Rectangle()
+                                    .foregroundColor(Color.white)
+                                    .cornerRadius(8)
+                                    .opacity(1)
+                                    .shadow(color: .black, radius: 2)
                                 VStack {
-                                    Image("packages")
-                                        .resizable()
-                                        .frame(width: self.getImageSize(width: geometry.size.width, height: (geometry.size.height / 2) - 20), height: self.getImageSize(width: geometry.size.width, height: (geometry.size.height / 2) - 20))
+                                    Image("money")
+                                        .resizable().scaledToFit()
+                                        .aspectRatio(contentMode: .fit).padding()
+                                    
+                                    Spacer()
                                       
-                                    Text("Packages")
-                                        .frame(width: self.getImageSize(width: geometry.size.width, height: (geometry.size.height / 2) - 20))
-                                }
-                                .onTapGesture {
-                                    self.userData.selectedTabItem = 1
-                                }
-                                Spacer()
-                                VStack {
-                                    Image("open_ticket")
-                                        .resizable()
-                                        .frame(width: self.getImageSize(width: geometry.size.width, height: (geometry.size.height / 2) - 20), height: self.getImageSize(width: geometry.size.width, height: (geometry.size.height / 2) - 20))
-                                        
-                                    Text("Open Ticket")
-                                        .frame(width: self.getImageSize(width: geometry.size.width, height: (geometry.size.height / 2) - 20))
+                                    Text("Payment")
                                         .fixedSize(horizontal: false, vertical: true)
-                                        .multilineTextAlignment(.center)
-                                }
-                                .onTapGesture {
-                                    self.userData.selectedTabItem = 3
-                                }
-                                Spacer()
-                                VStack {
-                                    Image("ticket_history")
-                                        .resizable()
-                                        .frame(width: self.getImageSize(width: geometry.size.width, height: (geometry.size.height / 2) - 20), height: self.getImageSize(width: geometry.size.width, height: (geometry.size.height / 2) - 20))
-                                      
-                                    Text("Ticket History")
-                                        .frame(width: self.getImageSize(width: geometry.size.width, height: (geometry.size.height / 2) - 20))
-                                        .fixedSize(horizontal: false, vertical: true)
-                                        .multilineTextAlignment(.center)
-                                }
-                                .onTapGesture {
-                                    self.userData.selectedTabItem = 3
-                                }
-                                Spacer()
+                                        .multilineTextAlignment(.center).padding(4)
+                                }.padding(.vertical)
                             }
-                            Spacer()
-                        }.frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: (geometry.size.height / 2) - 20)
-                    }
-                    
+                        }
+                        .onTapGesture {
+                            self.userData.selectedTabItem = 2
+                        }
+                        
+                        Spacer()
+                        
+                        VStack {
+                            ZStack {
+                                Rectangle()
+                                    .foregroundColor(Color.white)
+                                    .cornerRadius(8)
+                                    .opacity(1)
+                                    .shadow(color: .black, radius: 2)
+                                VStack {
+                                    Image("tickets")
+                                        .resizable().scaledToFit()
+                                        .aspectRatio(contentMode: .fit).padding()
+                                    
+                                    Spacer()
+                                      
+                                    Text("Support")
+                                        .fixedSize(horizontal: false, vertical: true)
+                                        .multilineTextAlignment(.center).padding(4)
+                                }.padding(.vertical)
+                            }
+                        }
+                        .onTapGesture {
+                            self.userData.selectedTabItem = 3
+                        }
+                        Spacer()
+                    }.padding(.vertical)
+                    Spacer()
                     self.chartHeader.frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: 40)
 
-                    self.chartView.frame(width: geometry.size.width - 18, height: (geometry.size.height/2) - 40)
+                    self.chartView.frame(width: geometry.size.width - 18, height: ((geometry.size.height/4) * 3) - 60)
                     
                 }.onReceive(self.dashboardViewModel.typeIndexPublisher.receive(on: RunLoop.main)) { value in
                     self.selectedType = value
@@ -379,11 +359,15 @@ struct Dashboard: View {
         }
     }
     
-    func getImageSize(width: CGFloat, height: CGFloat) -> CGFloat {
-        let tempWidth = (width - 4*20)/3
-        let tempHeight = (height - 4*20)/2
-        return tempWidth > tempHeight ? tempHeight : tempWidth
+    func getImageSize(width: CGFloat) -> CGFloat {
+        return (width - 4*32)/3
     }
+    
+//    func getImageSize(width: CGFloat, height: CGFloat) -> CGFloat {
+//        let tempWidth = (width - 4*20)/3
+//        let tempHeight = (height - 4*20)/2
+//        return tempWidth > tempHeight ? tempHeight : tempWidth
+//    }
 }
 
 struct LineChartSwiftUI: UIViewRepresentable {
