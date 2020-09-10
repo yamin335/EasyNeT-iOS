@@ -122,7 +122,9 @@ struct PackageChangeView: View {
                             
                         TextField("amount", text: self.$payableAmount)
                             .textFieldStyle(RoundedBorderTextFieldStyle())
-                            .keyboardType(.decimalPad)
+                            .keyboardType(.decimalPad).onAppear {
+                                self.payableAmount = self.viewModel.packChangeHelper?.payAmount.rounded(toPlaces: 2) ?? "0.0"
+                        }
                         
                         Spacer()
                     }.padding(.leading, 16)
