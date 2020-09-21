@@ -92,28 +92,28 @@ struct Billing: View {
     
     var modalOptions: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text("Debit/Credit Cards")
-                .font(.headline)
-                .foregroundColor(Colors.color2).padding(.top, 8)
-            
-            HStack {
-                Spacer()
-                Image("visa_card_logo")
-                .resizable()
-                .frame(width: 250, height: 90)
-                .scaledToFit()
-                .overlay (
-                    RoundedRectangle(cornerRadius: 4, style: .circular)
-                        .stroke(Color.gray, lineWidth: 0.5)
-                ).onTapGesture {
-                    withAnimation {
-                        self.showPaymentOptionsModal = false
-                        self.showChoiseBackGround = false
-                    }
-                    self.viewModel.getFosterPaymentUrl()
-                }
-                Spacer()
-            }.padding(.top, 6)
+//            Text("Debit/Credit Cards")
+//                .font(.headline)
+//                .foregroundColor(Colors.color2).padding(.top, 8)
+//            
+//            HStack {
+//                Spacer()
+//                Image("visa_card_logo")
+//                .resizable()
+//                .frame(width: 250, height: 90)
+//                .scaledToFit()
+//                .overlay (
+//                    RoundedRectangle(cornerRadius: 4, style: .circular)
+//                        .stroke(Color.gray, lineWidth: 0.5)
+//                ).onTapGesture {
+//                    withAnimation {
+//                        self.showPaymentOptionsModal = false
+//                        self.showChoiseBackGround = false
+//                    }
+//                    self.viewModel.getFosterPaymentUrl()
+//                }
+//                Spacer()
+//            }.padding(.top, 6)
             
             Text("Bkash Mobile Banking")
                 .font(.headline)
