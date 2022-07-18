@@ -96,7 +96,7 @@ struct LoginScreen: View {
 //                    }
 //                    .padding(.top, 1)
                     Spacer()
-                    HStack(alignment: .center){
+                    HStack(alignment: .center) {
                         
 //                        NavigationLink(destination: FaqsView()) {
 //                            Text("FAQs")

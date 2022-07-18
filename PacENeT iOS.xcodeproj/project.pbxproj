@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 50;
+	objectVersion = 52;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -23,10 +23,10 @@
 		6E56299224745D8F004E78D3 /* BkashPGW.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E56299124745D8F004E78D3 /* BkashPGW.swift */; };
 		6E56299624746540004E78D3 /* FosterPGW.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E56299524746540004E78D3 /* FosterPGW.swift */; };
 		6E56299824746927004E78D3 /* PGWView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E56299724746927004E78D3 /* PGWView.swift */; };
+		6E5F16C5284A079400CFDF34 /* Charts.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6E5F16C2284A069100CFDF34 /* Charts.framework */; platformFilter = ios; };
+		6E5F16C6284A079400CFDF34 /* Charts.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 6E5F16C2284A069100CFDF34 /* Charts.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		6E67D1B8243E1C83000B11FB /* SupportModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E67D1B7243E1C83000B11FB /* SupportModels.swift */; };
 		6E67D1BC243E39AD000B11FB /* SupportTicketRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E67D1BB243E39AD000B11FB /* SupportTicketRow.swift */; };
-		6E8C457A2429EAF000BC9276 /* Charts.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6E8C45772429EAA800BC9276 /* Charts.framework */; };
-		6E8C457B2429EAF000BC9276 /* Charts.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 6E8C45772429EAA800BC9276 /* Charts.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		6E8C457D242A142900BC9276 /* www in Resources */ = {isa = PBXBuildFile; fileRef = 6E8C457C242A142900BC9276 /* www */; };
 		6EA2F9E92444B83400340EB0 /* InvoiceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EA2F9E82444B83400340EB0 /* InvoiceView.swift */; };
 		6EA2F9EF2444B9D200340EB0 /* InvoiceDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EA2F9EE2444B9D200340EB0 /* InvoiceDetailView.swift */; };
@@ -72,16 +72,16 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		6E8C45762429EAA800BC9276 /* PBXContainerItemProxy */ = {
+		6E5F16C1284A069100CFDF34 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 6E8C45712429EAA800BC9276 /* Charts.xcodeproj */;
+			containerPortal = 6E5F16BC284A069100CFDF34 /* Charts.xcodeproj */;
 			proxyType = 2;
 			remoteGlobalIDString = 65AD9E95D9ED4DC0BD73A743;
 			remoteInfo = Charts;
 		};
-		6E8C45782429EAA800BC9276 /* PBXContainerItemProxy */ = {
+		6E5F16C3284A069100CFDF34 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 6E8C45712429EAA800BC9276 /* Charts.xcodeproj */;
+			containerPortal = 6E5F16BC284A069100CFDF34 /* Charts.xcodeproj */;
 			proxyType = 2;
 			remoteGlobalIDString = 1CBBC58C6CE1EBEE9852CE41;
 			remoteInfo = ChartsTests;
@@ -109,7 +109,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				6E8C457B2429EAF000BC9276 /* Charts.framework in Embed Frameworks */,
+				6E5F16C6284A079400CFDF34 /* Charts.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -133,9 +133,9 @@
 		6E56299124745D8F004E78D3 /* BkashPGW.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BkashPGW.swift; sourceTree = "<group>"; };
 		6E56299524746540004E78D3 /* FosterPGW.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FosterPGW.swift; sourceTree = "<group>"; };
 		6E56299724746927004E78D3 /* PGWView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PGWView.swift; sourceTree = "<group>"; };
+		6E5F16BC284A069100CFDF34 /* Charts.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Charts.xcodeproj; path = "../../Documents/QoS Exercise/Assignment3/Charts-master/Charts.xcodeproj"; sourceTree = "<group>"; };
 		6E67D1B7243E1C83000B11FB /* SupportModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportModels.swift; sourceTree = "<group>"; };
 		6E67D1BB243E39AD000B11FB /* SupportTicketRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportTicketRow.swift; sourceTree = "<group>"; };
-		6E8C45712429EAA800BC9276 /* Charts.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Charts.xcodeproj; path = "../../Downloads/Charts-master/Charts.xcodeproj"; sourceTree = "<group>"; };
 		6E8C457C242A142900BC9276 /* www */ = {isa = PBXFileReference; lastKnownFileType = folder; path = www; sourceTree = "<group>"; };
 		6EA2F9E82444B83400340EB0 /* InvoiceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvoiceView.swift; sourceTree = "<group>"; };
 		6EA2F9EE2444B9D200340EB0 /* InvoiceDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvoiceDetailView.swift; sourceTree = "<group>"; };
@@ -191,7 +191,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				6E8C457A2429EAF000BC9276 /* Charts.framework in Frameworks */,
+				6E5F16C5284A079400CFDF34 /* Charts.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -332,11 +332,11 @@
 			path = PaymentGateway;
 			sourceTree = "<group>";
 		};
-		6E8C45722429EAA800BC9276 /* Products */ = {
+		6E5F16BD284A069100CFDF34 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				6E8C45772429EAA800BC9276 /* Charts.framework */,
-				6E8C45792429EAA800BC9276 /* ChartsTests.xctest */,
+				6E5F16C2284A069100CFDF34 /* Charts.framework */,
+				6E5F16C4284A069100CFDF34 /* ChartsTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -351,7 +351,7 @@
 		FD8CC97E23B1D74E001CDBD1 = {
 			isa = PBXGroup;
 			children = (
-				6E8C45712429EAA800BC9276 /* Charts.xcodeproj */,
+				6E5F16BC284A069100CFDF34 /* Charts.xcodeproj */,
 				FD8CC98923B1D74E001CDBD1 /* PacENeT iOS */,
 				FD8CC9A023B1D765001CDBD1 /* PacENeT iOSTests */,
 				FD8CC9AB23B1D765001CDBD1 /* PacENeT iOSUITests */,
@@ -486,7 +486,7 @@
 			isa = PBXProject;
 			attributes = {
 				LastSwiftUpdateCheck = 1120;
-				LastUpgradeCheck = 1120;
+				LastUpgradeCheck = 1320;
 				ORGANIZATIONNAME = royalgreen;
 				TargetAttributes = {
 					FD8CC98623B1D74E001CDBD1 = {
@@ -515,8 +515,8 @@
 			projectDirPath = "";
 			projectReferences = (
 				{
-					ProductGroup = 6E8C45722429EAA800BC9276 /* Products */;
-					ProjectRef = 6E8C45712429EAA800BC9276 /* Charts.xcodeproj */;
+					ProductGroup = 6E5F16BD284A069100CFDF34 /* Products */;
+					ProjectRef = 6E5F16BC284A069100CFDF34 /* Charts.xcodeproj */;
 				},
 			);
 			projectRoot = "";
@@ -529,18 +529,18 @@
 /* End PBXProject section */
 
 /* Begin PBXReferenceProxy section */
-		6E8C45772429EAA800BC9276 /* Charts.framework */ = {
+		6E5F16C2284A069100CFDF34 /* Charts.framework */ = {
 			isa = PBXReferenceProxy;
 			fileType = wrapper.framework;
 			path = Charts.framework;
-			remoteRef = 6E8C45762429EAA800BC9276 /* PBXContainerItemProxy */;
+			remoteRef = 6E5F16C1284A069100CFDF34 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
-		6E8C45792429EAA800BC9276 /* ChartsTests.xctest */ = {
+		6E5F16C4284A069100CFDF34 /* ChartsTests.xctest */ = {
 			isa = PBXReferenceProxy;
 			fileType = wrapper.cfbundle;
 			path = ChartsTests.xctest;
-			remoteRef = 6E8C45782429EAA800BC9276 /* PBXContainerItemProxy */;
+			remoteRef = 6E5F16C3284A069100CFDF34 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 /* End PBXReferenceProxy section */
@@ -704,6 +704,7 @@
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
@@ -764,6 +765,7 @@
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
